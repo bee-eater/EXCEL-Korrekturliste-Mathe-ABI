@@ -8,6 +8,9 @@ Public Const WbNameConfig = "Config"
 Public Const WbNameGradeKey = "Notenspiegel"
 Public Const WbNameGradeSheet = "Noten"
 Public Const WbNamePrintSheet = "Print"
+Public Const WbNameTestDaten = "TestData"
+
+Public Const CfgNameChart = "GradeChart"
 
 Public Const CfgVLookUpPoints = "!$B$3:$C$303,2,0" ' SVERWEIS auf Punkte
 Public Const CfgVLookUpGrades = "!$B$3:$D$303,3,0" ' SVERWEIS auf Note
@@ -40,6 +43,11 @@ Public cmdAbortAll As Boolean
 Public gClrHeader As Long
 Public gClrTheme1 As Long
 Public gClrTheme2 As Long
+
+Public gClrTabGrades As Long
+Public gClrTabSections As Long
+Public gClrTabPrint As Long
+
 'Grade limits
 Public gClrMinus2 As Long
 Public gClrMinus1 As Long
@@ -48,6 +56,7 @@ Public gClrPlus2 As Long
 
 'Vars
 Public gNumOfPupils As Integer
+Public gSheetCnt As Integer
 
 '-----------------------------------------------------
 ' GLOBALE VARIABLEN INITIALISIEREN
@@ -58,11 +67,23 @@ Public Function Init()
     gClrTheme1 = RGB(217, 217, 217)
     gClrTheme2 = RGB(217, 217, 217)
     
+    gClrTabGrades = RGB(0, 176, 240)
+    gClrTabSections = RGB(146, 208, 80)
+    gClrTabPrint = RGB(255, 255, 0)
+    
     gClrMinus2 = RGB(146, 208, 80)
     gClrMinus1 = RGB(205, 255, 189)
     gClrPlus1 = RGB(255, 151, 151)
     gClrPlus2 = RGB(255, 0, 0)
     
     gNumOfPupils = Worksheets(WbNameConfig).Range(CfgNumOfPupi).Value
+
+    Dim i As Integer
+    gSheetCnt = 0
+    For i = 0 To CfgMaxSheets
+        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+            gSheetCnt = gSheetCnt + 1
+        End If
+    Next i
     
 End Function

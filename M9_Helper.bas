@@ -170,9 +170,14 @@ End Function
 
 Public Sub TestDatenUebernehmen()
 
-    Sheets("TestDaten").Visible = True
+    Application.ScreenUpdating = False
+    
+    Dim ws As String
+    ws = ActiveSheet.Name
 
-    Sheets("TestDaten").Select
+    Sheets(WbNameTestDaten).Visible = True
+
+    Sheets(WbNameTestDaten).Select
     Range("A1:I23").Select
     Selection.Copy
     Sheets("Analysis A").Select
@@ -180,7 +185,7 @@ Public Sub TestDatenUebernehmen()
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
     Range("D7").Select
-    Sheets("TestDaten").Select
+    Sheets(WbNameTestDaten).Select
     Range("A25:L47").Select
     Application.CutCopyMode = False
     Selection.Copy
@@ -189,7 +194,7 @@ Public Sub TestDatenUebernehmen()
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
     Range("D7").Select
-    Sheets("TestDaten").Select
+    Sheets(WbNameTestDaten).Select
     Range("A49:C71").Select
     Application.CutCopyMode = False
     Selection.Copy
@@ -198,7 +203,7 @@ Public Sub TestDatenUebernehmen()
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
     Range("D7").Select
-    Sheets("TestDaten").Select
+    Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=27
     Range("A73:F95").Select
     Application.CutCopyMode = False
@@ -208,7 +213,7 @@ Public Sub TestDatenUebernehmen()
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
     Range("D7").Select
-    Sheets("TestDaten").Select
+    Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=18
     Range("A97:D119").Select
     Application.CutCopyMode = False
@@ -218,7 +223,7 @@ Public Sub TestDatenUebernehmen()
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
     Range("D7").Select
-    Sheets("TestDaten").Select
+    Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=33
     Range("A121:F143").Select
     Application.CutCopyMode = False
@@ -229,6 +234,19 @@ Public Sub TestDatenUebernehmen()
         :=False, Transpose:=False
     Range("D7").Select
     
-    Sheets("TestDaten").Visible = False
+    Sheets(WbNameTestDaten).Visible = False
+    
+    Worksheets(ws).Activate
+
+    Application.ScreenUpdating = True
+    
 End Sub
+
+Public Sub OMG()
+    Application.DisplayAlerts = True
+    Application.EnableEvents = True
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+End Sub
+
 
