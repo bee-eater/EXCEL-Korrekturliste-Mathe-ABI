@@ -88,7 +88,9 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
         .ChartGroups(1).Overlap = 0
         .ChartGroups(1).GapWidth = 100
         .SetElement (msoElementDataLabelInsideEnd)
-        .FullSeriesCollection(1).DataLabels.Format.TextFrame2.TextRange.Font.Fill.ForeColor.ObjectThemeColor = msoThemeColorBackground1
+        ' war FullSeriesCollection(1)
+        .SeriesCollection(1).DataLabels.Format.TextFrame2.TextRange.Font.Fill.ForeColor.ObjectThemeColor = msoThemeColorBackground1
+        .SeriesCollection(1).DataLabels.Format.TextFrame2.TextRange.Font.Bold = msoTrue
         '--------------------------------
         ' Format and create title
         '--------------------------------
