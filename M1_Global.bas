@@ -4,6 +4,9 @@ Option Explicit
 '-----------------------------------------------------
 ' KONSTANTEN
 '-----------------------------------------------------
+Public Const DevMode = 0
+Public Const WbPw = ""
+
 Public Const WbNameConfig = "Config"
 Public Const WbNameGradeKey = "Notenspiegel"
 Public Const WbNameGradeSheet = "Noten"

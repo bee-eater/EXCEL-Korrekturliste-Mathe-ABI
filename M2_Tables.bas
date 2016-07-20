@@ -55,7 +55,7 @@ Private Function makeSure() As Boolean
         makeSure = False
         ' Abfragen ob wirklich neue Tabellen erstellt werden sollen...
         Dim Request As Integer
-        Request = MsgBox("Sicher dass sie neue Tabellen erzeuge wollen?" & vbCrLf & "Mindestens eine Tabelle wurde gefunden, die überschrieben wird!", vbExclamation + vbOKCancel, "Sicher?")
+        Request = MsgBox("Sicher dass sie neue Tabellen erzeugen wollen?" & vbCrLf & "Mindestens eine Tabelle wurde gefunden, die überschrieben wird!", vbExclamation + vbOKCancel, "Sicher?")
         If Request = vbCancel Then
             Exit Function
         End If
@@ -430,6 +430,8 @@ Private Function FillGradePage()
     Next i
     Worksheets(WbNameGradeSheet).Columns(CfgColStart + CfgColOffsetFirstEx + sheetCnt + 3).Hidden = vbTrue
     
+    Worksheets(WbNameGradeSheet).Range("A1").Select
+    
     
 End Function
 
@@ -440,7 +442,7 @@ Public Function UpdateUpDownColors()
     
     Application.ScreenUpdating = False
     
-    Worksheets(WbNameGradeSheet).Unprotect
+    Worksheets(WbNameGradeSheet).Unprotect Password:=WbPw
     
     Dim i As Integer
         
@@ -482,27 +484,37 @@ Public Function UpdateUpDownColors()
     Else
         MsgBox ("Corrupt!")
     End If
-        
-    Worksheets(WbNameGradeSheet).Protect
-    Worksheets(WbNameGradeSheet).EnableSelection = xlUnlockedCells
-        
+    Worksheets(WbNameGradeSheet).Range("A1").Select
+    
+    If DevMode <> 1 Then
+        Worksheets(WbNameGradeSheet).Protect Password:=WbPw
+        Worksheets(WbNameGradeSheet).EnableSelection = xlUnlockedCells
+    End If
+    
     Application.ScreenUpdating = True
         
 End Function
 
 Private Function LockSheets()
     
-    Dim i As Integer
-    For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
-            Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).Protect
-            Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).EnableSelection = xlUnlockedCells
+    If DevMode <> 1 Then
+        Dim i As Integer
+        For i = 0 To CfgMaxSheets
+            If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+                Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).Protect Password:=WbPw
+                Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).EnableSelection = xlUnlockedCells
+            End If
+        Next i
+        
+        If WSExists(WbNameGradeSheet) Then
+            Worksheets(WbNameGradeSheet).Protect Password:=WbPw
+            Worksheets(WbNameGradeSheet).EnableSelection = xlUnlockedCells
         End If
-    Next i
-    
-    If WSExists(WbNameGradeSheet) Then
-        Worksheets(WbNameGradeSheet).Protect
-        Worksheets(WbNameGradeSheet).EnableSelection = xlUnlockedCells
+        
+        Worksheets(WbNameConfig).Protect Password:=WbPw
+        Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
+        Worksheets(WbNameGradeKey).Protect Password:=WbPw
+        Worksheets(WbNameGradeKey).EnableSelection = xlUnlockedCells
     End If
-
+    
 End Function
