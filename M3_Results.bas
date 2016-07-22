@@ -77,17 +77,27 @@ Public Function CreateResults()
 End Function
 
 Private Function makeSure() As Boolean
-
+    
     makeSure = False
-    ' Abfragen ob wirklich neue Tabellen erstellt werden sollen...
-    Dim Request As Integer
-    Request = MsgBox("Sicher dass sie die Druckseite neu erstellen wollen?" & vbCrLf & "Es sollten keine Daten verloren gehen, da alle Daten automatisch eingesammelt werden! Manuell auf der Druckseite vorgenommene Modifikationen werden jedoch überschrieben!", vbExclamation + vbOKCancel, "Sicher?")
-    If Request = vbCancel Then
-        Exit Function
-    End If
+    
+    Dim found As Boolean
+    ' Prüfen ob Sheet schon existiert
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Worksheets
+        If ws.Name = WbNamePrintSheet Then
+            ' Abfragen ob wirklich neue Tabellen erstellt werden sollen...
+            Dim Request As Integer
+            Request = MsgBox("Sicher dass sie die Druckseite neu erstellen wollen?" & vbCrLf & "Es sollten keine Daten verloren gehen, da alle Daten automatisch eingesammelt werden! Manuell auf der Druckseite vorgenommene Modifikationen werden jedoch überschrieben!", vbExclamation + vbOKCancel, "Sicher?")
+            If Request = vbCancel Then
+                Exit Function
+            End If
+            Exit For
+        End If
+    Next ws
+    
     ' Not exited -> sure
     makeSure = True
-    
+
 End Function
 
 Private Function PaintPrintPage(sheetCnt As Integer)
