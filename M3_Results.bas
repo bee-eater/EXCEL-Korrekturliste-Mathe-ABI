@@ -43,7 +43,7 @@ Public Function CreateResults()
             With Worksheets(WbNamePrintSheet).PageSetup
                 .Orientation = xlLandscape
                 .FitToPagesWide = 1
-                .PrintArea = "A1:Q" & CStr(5 + (sheetCnt * 4) + (gNumOfPupils) * ((4 * (sheetCnt + 1)) + 2))
+                .PrintArea = "A1:Q" & CStr(5 + (sheetCnt * 4) + (gNumOfPupils - 1) * ((4 * (sheetCnt + 1)) + 2) + 29) '29 Zellen für das Chart
                 .LeftMargin = Application.CentimetersToPoints(1)
                 .RightMargin = Application.CentimetersToPoints(1)
                 .TopMargin = Application.CentimetersToPoints(1)

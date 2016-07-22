@@ -13,7 +13,7 @@ Function WSExists(n As String) As Boolean
 End Function
 
 ' Sourcecode exportieren für Versionsverwaltung
-Public Sub ExportSourceFiles()
+Public Function ExportSourceFiles()
     Dim destPath As String
     destPath = Application.ActiveWorkbook.Path & "\"
     Dim component As VBComponent
@@ -23,7 +23,7 @@ Public Sub ExportSourceFiles()
         End If
     Next
 
-End Sub
+End Function
 
 Private Function ToFileExtension(vbeComponentType As vbext_ComponentType) As String
     
@@ -174,6 +174,8 @@ Public Sub TestDatenUebernehmen()
     
     Dim ws As String
     ws = ActiveSheet.Name
+    
+    Worksheets("TestData").Unprotect Password:=WbPw
 
     Sheets(WbNameTestDaten).Visible = True
 
@@ -239,14 +241,7 @@ Public Sub TestDatenUebernehmen()
     Worksheets(ws).Activate
 
     Application.ScreenUpdating = True
-    
-End Sub
 
-Public Sub OMG()
-    Application.DisplayAlerts = True
-    Application.EnableEvents = True
-    Application.ScreenUpdating = True
-    Application.Calculation = xlCalculationAutomatic
 End Sub
 
 

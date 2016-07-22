@@ -116,7 +116,7 @@ Private Function PaintSegmentPages()
         ' Set column widths for sub exercises and for sum column
         Worksheets(actSheetName).Columns(1).ColumnWidth = 2.71  ' Spalte A bleibt leer
         Worksheets(actSheetName).Columns(CfgColStart).ColumnWidth = 2.71  ' Spalte B: Schüler-Index
-        Worksheets(actSheetName).Columns(CfgColStart + 1).ColumnWidth = 22  ' Spalte C: Schüler-Name
+        Worksheets(actSheetName).Columns(CfgColStart + 1).ColumnWidth = 25  ' Spalte C: Schüler-Name
         
         Dim numOfSubEx As Integer
         Dim subExIdx, subEx As Integer
@@ -287,7 +287,7 @@ Private Function PaintGradePage()
     ' Set column widths for sub exercises and for sum column
     Worksheets(WbNameGradeSheet).Columns(1).ColumnWidth = 2.71  ' Spalte A bleibt leer
     Worksheets(WbNameGradeSheet).Columns(2).ColumnWidth = 2.71  ' Spalte B: Schüler-Index
-    Worksheets(WbNameGradeSheet).Columns(3).ColumnWidth = 22  ' Spalte C: Schüler-Name
+    Worksheets(WbNameGradeSheet).Columns(3).ColumnWidth = 25  ' Spalte C: Schüler-Name
     For i = 0 To sheetCnt - 1
         Worksheets(WbNameGradeSheet).Columns(4 + i).ColumnWidth = 11
     Next i
@@ -495,7 +495,7 @@ Public Function UpdateUpDownColors()
         
 End Function
 
-Private Function LockSheets()
+Public Function LockSheets()
     
     If DevMode <> 1 Then
         Dim i As Integer
@@ -514,6 +514,30 @@ Private Function LockSheets()
         Worksheets(WbNameConfig).Protect Password:=WbPw
         Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
         Worksheets(WbNameGradeKey).Protect Password:=WbPw
+        Worksheets(WbNameGradeKey).EnableSelection = xlUnlockedCells
+    End If
+    
+End Function
+
+Public Function UnlockSheets()
+    
+    If DevMode <> 1 Then
+        Dim i As Integer
+        For i = 0 To CfgMaxSheets
+            If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+                Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).Unprotect Password:=WbPw
+                Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).EnableSelection = xlUnlockedCells
+            End If
+        Next i
+        
+        If WSExists(WbNameGradeSheet) Then
+            Worksheets(WbNameGradeSheet).Unprotect Password:=WbPw
+            Worksheets(WbNameGradeSheet).EnableSelection = xlUnlockedCells
+        End If
+        
+        Worksheets(WbNameConfig).Unprotect Password:=WbPw
+        Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
+        Worksheets(WbNameGradeKey).Unprotect Password:=WbPw
         Worksheets(WbNameGradeKey).EnableSelection = xlUnlockedCells
     End If
     

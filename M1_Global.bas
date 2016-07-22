@@ -15,9 +15,9 @@ Public Const WbNameTestDaten = "TestData"
 
 Public Const CfgNameChart = "GradeChart"
 
-Public Const CfgVLookUpPoints = "!$B$3:$C$303,2,0" ' SVERWEIS auf Punkte
-Public Const CfgVLookUpGrades = "!$B$3:$D$303,3,0" ' SVERWEIS auf Note
-Public Const CfgVLookUpUpDown = "!$B$3:$E$303,4,0" ' SVERWEIS auf Grenzfälle
+Public Const CfgVLookUpPoints = "!$B$3:$C$302,2,0" ' SVERWEIS auf Punkte
+Public Const CfgVLookUpGrades = "!$B$3:$D$302,3,0" ' SVERWEIS auf Note
+Public Const CfgVLookUpUpDown = "!$B$3:$E$302,4,0" ' SVERWEIS auf Grenzfälle
 
 Public Const CfgMaxSheets = 5        ' Anzahl der Teilbereiche - 1
 Public Const CfgFirstSect = "$F$4"   ' Zelle mit dem ersten Teilbereich (2 Spalten jeweils)
