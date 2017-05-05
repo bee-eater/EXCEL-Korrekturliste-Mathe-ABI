@@ -58,7 +58,7 @@ Public Function CreateResults()
             ' Druckdialog öffnen
             '------------------------------------
             Dim doPrint As Integer
-            doPrint = MsgBox("Möchten Sie drucken?", vbQuestion + vbOKCancel, "Hau raus!")
+            doPrint = MsgBox("Möchten Sie drucken?", vbQuestion + vbOKCancel, "Erst mal gucken oder ...")
             If doPrint = vbOK Then
                 Application.Dialogs(xlDialogPrint).Show
             End If

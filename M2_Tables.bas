@@ -197,6 +197,8 @@ Private Function FillSegmentPages()
     Dim actSheetName As String
     Dim numOfSubEx, span As Integer
     Dim i As Integer
+    Dim funStr1 As String
+    Dim funStr2 As String
     
     For actSheet = 0 To CfgMaxSheets
     
@@ -240,8 +242,13 @@ Private Function FillSegmentPages()
             Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "=SUM(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + i) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + i) & ")"
         Next i
         For i = 0 To numOfSubEx - 1
-            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + CfgColOffsetFirstEx + i).Formula = "=SUM(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & ")/(" & CStr(gNumOfPupils) & "*" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & ")"
+            ' 05.05.2017 - Mittelwertfunktion nehmen, dann sieht man gleich die Prozentzahl!!
+            'Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + CfgColOffsetFirstEx + i).Formula = "=SUM(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & ")/(" & CStr(gNumOfPupils) & "*" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & ")"
+            funStr1 = "=IF(COUNTIF(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & ",""<>"")<>0,SUM("
+            funStr2 = funStr1 & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & ")/(COUNTIF(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & ",""<>"")*" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + i).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & "),0)"
+            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + CfgColOffsetFirstEx + i).Formula = funStr2
         Next i
+        
         
     Next actSheet
     
