@@ -347,6 +347,7 @@ Private Function PaintGradePage()
     Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + sheetCnt + 4)).Select
     Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlCenter)
     Selection.style = "Percent"
+        
     ' Border anpassen
     Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2)).Select
     Call setBorder(False, True, True, True, True, xlMedium, 0, True)
@@ -425,9 +426,13 @@ Private Function FillGradePage()
     '------------------------------------
     ' Durchschnitt
     '------------------------------------
+    ' Punkte
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + gNumOfPupils + 2, CfgColStart + CfgColOffsetFirstEx + sheetCnt).Value = Chr(248)
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + gNumOfPupils + 2, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Formula = "=AVERAGE(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & ")"
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + gNumOfPupils + 2, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).NumberFormat = "0.00"
+    ' Noten
+    Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + gNumOfPupils + 2, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2).FormulaArray = "=AVERAGE(SUBSTITUTE(SUBSTITUTE(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & ",""+"",""""),""-"","""")*1)"
+    Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + gNumOfPupils + 2, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2).NumberFormat = "0.00"
     
     '------------------------------------
     ' Up/Down Color
