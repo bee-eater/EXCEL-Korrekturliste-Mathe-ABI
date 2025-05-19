@@ -6,6 +6,7 @@ Option Explicit
 '-----------------------------------------------------
 Public Const DevMode = 0
 Public Const WbPw = ""
+Public Const Version = "v2.0.2"
 
 Public Const WbNameConfig = "Config"
 Public Const WbNameGradeKey = "Notenspiegel"
@@ -28,6 +29,7 @@ Public Const CfgAbiDate = "$G$27"    ' Zelle in der das Datum steht
 Public Const CfgAbiClass = "$G$29"   ' Zelle in der der Kurs steht
 Public Const CfgAbiTeacher = "$G$28" ' Zelle in der der Kursleiter steht
 Public Const CfgAbiTitle = "$F$2"    ' Zelle mit dem Titel der Arbeit
+Public Const CfgUpdateInfo = "$J$29" ' Zelle mit der Update-Info
 
 Public Const CfgPrintNameCol = 5     ' Spalte für Namen auf Druckseite
 

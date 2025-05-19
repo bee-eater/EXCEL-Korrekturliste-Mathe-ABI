@@ -244,4 +244,99 @@ Public Sub TestDatenUebernehmen()
 
 End Sub
 
+Function IsVersionGreater(v1 As String, v2 As String) As Boolean
+    Dim parts1() As String, parts2() As String
+    Dim i As Integer, maxLen As Integer
+    Dim num1 As Integer, num2 As Integer
+
+    ' Remove leading "v"
+    v1 = Replace(v1, "v", "")
+    v2 = Replace(v2, "v", "")
+
+    parts1 = Split(v1, ".")
+    parts2 = Split(v2, ".")
+
+    maxLen = Application.WorksheetFunction.Max(UBound(parts1), UBound(parts2))
+
+    For i = 0 To maxLen
+        If i <= UBound(parts1) Then
+            num1 = Val(parts1(i))
+        Else
+            num1 = 0
+        End If
+
+        If i <= UBound(parts2) Then
+            num2 = Val(parts2(i))
+        Else
+            num2 = 0
+        End If
+
+        If num1 > num2 Then
+            IsVersionGreater = True
+            Exit Function
+        ElseIf num1 < num2 Then
+            IsVersionGreater = False
+            Exit Function
+        End If
+    Next i
+
+    IsVersionGreater = False ' equal versions
+End Function
+
+Function CheckForUpdate(currentVersion As String)
+    Dim http As Object
+    Dim json As Object
+    Dim response As String
+    Dim latestVersion As String
+
+    On Error GoTo UpdateCheckError
+    
+    ' Create HTTP object
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", "https://api.github.com/repos/bee-eater/EXCEL-Korrekturliste-Mathe-ABI/releases/latest", False
+    http.setRequestHeader "User-Agent", "Excel VBA"
+    http.Send
+        
+    Worksheets(WbNameConfig).Unprotect Password:=WbPw
+    Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
+
+    ' Check for valid response
+    If http.Status = 200 Then
+        response = http.responseText
+        ' Parse JSON
+        Set json = JsonConverter.ParseJson(response)
+        latestVersion = json("tag_name") ' e.g. "v2.0.1"
+
+        ' Compare versions
+        If IsVersionGreater(latestVersion, Version) Then
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Update available! " + Version + " " + ChrW(8594) + " " + latestVersion
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 138, 255) ' Blue
+        ElseIf IsVersionGreater(Version, latestVersion) Then
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Futuristic! Nice! " + Version + " " + ChrW(8592) + " " + latestVersion
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
+        Else
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = ChrW(10003) + " " + Version
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
+        End If
+    Else
+        ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = http.Status
+        ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
+    End If
+    
+    Worksheets(WbNameConfig).Protect Password:=WbPw
+    Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
+    
+    Exit Function
+    
+UpdateCheckError:
+    Worksheets(WbNameConfig).Unprotect Password:=WbPw
+    Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
+    ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Error checking for updates..."
+    ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
+    Worksheets(WbNameConfig).Protect Password:=WbPw
+    Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
+    
+End Function
+
+
 
