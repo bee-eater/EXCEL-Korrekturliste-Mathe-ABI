@@ -6,9 +6,10 @@ Option Explicit
 '-----------------------------------------------------
 Public Const DevMode = 0
 Public Const WbPw = ""
-Public Const Version = "v2.0.2"
+Public Const Version = "v2.1.0"
 
 Public Const WbNameConfig = "Config"
+Public Const WbNameSelExConfig = "ConfigW"
 Public Const WbNameGradeKey = "Notenspiegel"
 Public Const WbNameGradeSheet = "Noten"
 Public Const WbNamePrintSheet = "Print"
@@ -20,9 +21,11 @@ Public Const CfgVLookUpPoints = "!$B$3:$C$302,2,0" ' SVERWEIS auf Punkte
 Public Const CfgVLookUpGrades = "!$B$3:$D$302,3,0" ' SVERWEIS auf Note
 Public Const CfgVLookUpUpDown = "!$B$3:$E$302,4,0" ' SVERWEIS auf Grenzfälle
 
-Public Const CfgMaxSheets = 5        ' Anzahl der Teilbereiche - 1
+Public Const CfgMaxExercisesPerSection = 15
+Public Const CfgMaxSheets = 6        ' Anzahl der Teilbereiche - 1
 Public Const CfgFirstSect = "$F$4"   ' Zelle mit dem ersten Teilbereich (2 Spalten jeweils)
 Public Const CfgExerCount = "$F$21"  ' Zelle in der die Anzahl der angelegten Teilaufgaben steht
+Public Const CfgSelEx = "$F$22"      ' Zelle in der angegeben ist, ob es sich um Wahlaufgaben handelt
 Public Const CfgFirstPupi = "$B$5"   ' Zelle an der die Schüler beginnen
 Public Const CfgNumOfPupi = "$C$45"  ' Zelle in der die Anzahl der Schüler steht
 Public Const CfgAbiDate = "$G$27"    ' Zelle in der das Datum steht
@@ -48,7 +51,10 @@ Public cmdAbortAll As Boolean
 Public gClrHeader As Long
 Public gClrTheme1 As Long
 Public gClrTheme2 As Long
+Public gClrBg1 As Long
+Public gClrBg2 As Long
 
+Public gClrTabConfig As Long
 Public gClrTabGrades As Long
 Public gClrTabSections As Long
 Public gClrTabPrint As Long
@@ -63,6 +69,10 @@ Public gClrPlus2 As Long
 Public gNumOfPupils As Integer
 Public gSheetCnt As Integer
 
+'Handler
+Public gBtnSelXUpdateMacro As String
+
+
 '-----------------------------------------------------
 ' GLOBALE VARIABLEN INITIALISIEREN
 '-----------------------------------------------------
@@ -72,6 +82,10 @@ Public Function Init()
     gClrTheme1 = RGB(217, 217, 217)
     gClrTheme2 = RGB(217, 217, 217)
     
+    gClrBg1 = RGB(255, 255, 255)
+    gClrBg2 = RGB(240, 240, 240)
+    
+    gClrTabConfig = RGB(255, 192, 0)
     gClrTabGrades = RGB(0, 176, 240)
     gClrTabSections = RGB(146, 208, 80)
     gClrTabPrint = RGB(255, 255, 0)
@@ -81,12 +95,12 @@ Public Function Init()
     gClrPlus1 = RGB(255, 151, 151)
     gClrPlus2 = RGB(255, 0, 0)
     
-    gNumOfPupils = Worksheets(WbNameConfig).Range(CfgNumOfPupi).Value
+    gNumOfPupils = Worksheets(WbNameConfig).range(CfgNumOfPupi).Value
 
     Dim i As Integer
     gSheetCnt = 0
     For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+        If WSExists(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value) Then
             gSheetCnt = gSheetCnt + 1
         End If
     Next i

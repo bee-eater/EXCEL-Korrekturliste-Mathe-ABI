@@ -5,7 +5,7 @@ Function WSExists(n As String) As Boolean
   Dim ws As Worksheet
   WSExists = False
   For Each ws In Worksheets
-    If n = ws.Name Then
+    If n = ws.name Then
       WSExists = True
       Exit Function
     End If
@@ -19,7 +19,7 @@ Public Function ExportSourceFiles()
     Dim component As VBComponent
     For Each component In Application.VBE.ActiveVBProject.VBComponents
         If component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule Then
-            component.Export destPath & component.Name & ToFileExtension(component.Type)
+            component.Export destPath & component.name & ToFileExtension(component.Type)
         End If
     Next
 
@@ -173,69 +173,88 @@ Public Sub TestDatenUebernehmen()
     Application.ScreenUpdating = False
     
     Dim ws As String
-    ws = ActiveSheet.Name
+    ws = ActiveSheet.name
     
     Worksheets("TestData").Unprotect Password:=WbPw
 
     Sheets(WbNameTestDaten).Visible = True
 
     Sheets(WbNameTestDaten).Select
-    Range("A1:I23").Select
+    range("A1:F23").Select
     Selection.Copy
     Sheets("Analysis A").Select
-    Range("D7").Select
+    range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    Range("D7").Select
+    range("D7").Select
     Sheets(WbNameTestDaten).Select
-    Range("A25:L47").Select
+    range("A25:J47").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Analysis B").Select
-    Range("D7").Select
+    range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    Range("D7").Select
+    range("D7").Select
     Sheets(WbNameTestDaten).Select
-    Range("A49:C71").Select
+    range("A49:A71").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Stochastik A").Select
-    Range("D7").Select
+    range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    Range("D7").Select
+    range("D7").Select
     Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=27
-    Range("A73:F95").Select
+    range("A73:E95").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Stochastik B").Select
-    Range("D7").Select
+    range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    Range("D7").Select
+    range("D7").Select
     Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=18
-    Range("A97:D119").Select
+    range("A97:B119").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Geometrie A").Select
-    Range("D7").Select
+    range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    Range("D7").Select
+    range("D7").Select
     Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=33
-    Range("A121:F143").Select
+    range("A121:E143").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Geometrie B").Select
-    Range("D7").Select
+    range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    Range("D7").Select
+    range("D7").Select
     
+    
+    Sheets(WbNameTestDaten).Select
+    range("A147:E169").Select
+    Application.CutCopyMode = False
+    Selection.Copy
+    Sheets("ConfigW").Select
+    range("D7").Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    
+    Sheets(WbNameTestDaten).Select
+    range("A173:E195").Select
+    Application.CutCopyMode = False
+    Selection.Copy
+    Sheets("Wahlaufgaben").Select
+    range("D7").Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=True, Transpose:=False
+        
     Sheets(WbNameTestDaten).Visible = False
     
     Worksheets(ws).Activate
@@ -309,18 +328,18 @@ Function CheckForUpdate(currentVersion As String)
 
         ' Compare versions
         If IsVersionGreater(latestVersion, Version) Then
-            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Update available! " + Version + " " + ChrW(8594) + " " + latestVersion
-            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 138, 255) ' Blue
+            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Update available! " + Version + " " + ChrW(8594) + " " + latestVersion
+            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(0, 138, 255) ' Blue
         ElseIf IsVersionGreater(Version, latestVersion) Then
-            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Futuristic! Nice! " + Version + " " + ChrW(8592) + " " + latestVersion
-            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
+            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Futuristic! Nice! " + Version + " " + ChrW(8592) + " " + latestVersion
+            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
         Else
-            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = ChrW(10003) + " " + Version
-            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
+            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = ChrW(10003) + " " + Version
+            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
         End If
     Else
-        ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = http.Status
-        ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
+        ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = http.Status
+        ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
     End If
     
     Worksheets(WbNameConfig).Protect Password:=WbPw
@@ -331,12 +350,14 @@ Function CheckForUpdate(currentVersion As String)
 UpdateCheckError:
     Worksheets(WbNameConfig).Unprotect Password:=WbPw
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
-    ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Error checking for updates..."
-    ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
+    ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Error checking for updates..."
+    ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
     Worksheets(WbNameConfig).Protect Password:=WbPw
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
     
 End Function
+
+
 
 
 

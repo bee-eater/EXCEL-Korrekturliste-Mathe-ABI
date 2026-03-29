@@ -16,10 +16,24 @@ Public Function CreateTables()
         Call FillSegmentPages
         Call PaintGradePage
         Call FillGradePage
-        
-        ' Get back to config page
-        Worksheets(WbNameConfig).Activate
-        Worksheets(WbNameConfig).Range("A1").Select
+                
+        ' Wenn es Wahlaufgaben gibt, Konfigseite erzeugen und anzeigen
+        If CheckForSelEx() Then
+            ' Funktionen für Wahlaufgaben -> Config erstellen
+            ' Auf Konfig-Seite gibt es dann einen Button für das Update des Tabs
+            Call PaintSelXCfgPage
+            Call FillSelXCfgPage
+            Worksheets(WbNameSelExConfig).Activate
+            Worksheets(WbNameSelExConfig).Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select
+        Else
+            ' Löschen wenn es ein ConfigW Blatt gibt
+            If WSExists(WbNameSelExConfig) Then
+                Worksheets(WbNameSelExConfig).Delete
+            End If
+            ' Get back to config page
+            Worksheets(WbNameConfig).Activate
+            Worksheets(WbNameConfig).range(CfgFirstPupi).Offset(0, 1).Select
+        End If
         
         Call LockSheets
         
@@ -45,7 +59,7 @@ Private Function makeSure() As Boolean
     Dim found As Boolean
     For Each ws In ThisWorkbook.Worksheets
         For i = 0 To CfgMaxSheets
-            If StrComp(ws.Name, Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Text) = 0 Then
+            If StrComp(ws.name, Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Text) = 0 Then
                 found = True
             End If
         Next i
@@ -84,7 +98,7 @@ Private Function PaintSegmentPages()
     For actSheet = 0 To CfgMaxSheets
     
         ' Set name for further processing
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, actSheet * 2).Value
         If actSheetName = "" Then
             Exit Function
         End If
@@ -96,7 +110,7 @@ Private Function PaintSegmentPages()
             Worksheets(actSheetName).Delete
         End If
         ' Create new sheet
-        Worksheets.Add(Before:=Worksheets(WbNameConfig)).Name = actSheetName
+        Worksheets.Add(Before:=Worksheets(WbNameConfig)).name = actSheetName
         Worksheets(actSheetName).Tab.color = gClrTabSections
         
         '------------------------------------
@@ -120,7 +134,7 @@ Private Function PaintSegmentPages()
         
         Dim numOfSubEx As Integer
         Dim subExIdx, subEx As Integer
-        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, actSheet * 2).Value
+        numOfSubEx = Worksheets(WbNameConfig).range(CfgExerCount).Offset(0, actSheet * 2).Value
         If numOfSubEx > 0 Then
             ' Set column widths for sub exercises
             For subEx = 0 To numOfSubEx - 1
@@ -139,47 +153,47 @@ Private Function PaintSegmentPages()
         span = numOfSubEx + 2 ' Anzahl der Teilaufgaben + 3 Spalten (Index,Name,Summe)
                 
         ' Abi Zelle
-        Worksheets(actSheetName).Range(Cells(CfgRowStart, CfgColStart), Cells(CfgRowStart, CfgColStart + CInt(floor(CDbl(span) / 2)))).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart, CfgColStart), Cells(CfgRowStart, CfgColStart + CInt(floor(CDbl(span) / 2)))).Select
         Call setBorder(False, True, False, True, False, xlMedium, gClrHeader, True, xlLeft, xlCenter)
         Selection.Font.Bold = True
         ' Kurs Zelle
-        Worksheets(actSheetName).Range(Cells(CfgRowStart, CfgColStart + CInt(floor(CDbl(span) / 2)) + 1), Cells(CfgRowStart, CfgColStart + span)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart, CfgColStart + CInt(floor(CDbl(span) / 2)) + 1), Cells(CfgRowStart, CfgColStart + span)).Select
         Call setBorder(False, False, True, True, False, xlMedium, gClrHeader, True, xlRight, xlCenter)
         Selection.Font.Bold = True
         ' Bereich Zelle
-        Worksheets(actSheetName).Range(Cells(CfgRowStart + 1, CfgColStart), Cells(CfgRowStart + 2, CfgColStart + span)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart + 1, CfgColStart), Cells(CfgRowStart + 2, CfgColStart + span)).Select
         Call setBorder(False, True, True, False, True, xlMedium, gClrHeader, True, xlHAlignCenterAcrossSelection, xlCenter)
         Selection.Font.Bold = True
         Selection.Font.Size = 12
 
         ' Überschrift Namen
-        Worksheets(actSheetName).Range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1)).Select
         Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, True)
         ' Überschrift Aufgaben / Punkte
-        Worksheets(actSheetName).Range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + span)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + span)).Select
         Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, False, xlCenter, xlBottom)
         
         ' Namen
-        Worksheets(actSheetName).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx - 1)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx - 1)).Select
         Call setBorder(False, True, True, True, True, xlThin, gClrTheme1, False)
         ' Punkte-Bereich
-        Worksheets(actSheetName).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Select
         Call setBorder(False, True, True, True, True, xlThin, RGB(255, 255, 255), False, xlCenter, xlCenter)
         Selection.Locked = False
         For i = 0 To numOfSubEx - 1
-            Worksheets(actSheetName).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i)).Select
+            Worksheets(actSheetName).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i)).Select
             setUpperLimit (CStr(Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Address))
         Next i
         ' Summe-Bereich
-        Worksheets(actSheetName).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + span), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + span)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + span), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + span)).Select
         Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, False, xlCenter, xlCenter)
         
         ' Prozentualer Punkteschnitt
-        Worksheets(actSheetName).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + span)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + span)).Select
         Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, True, xlCenter, xlCenter)
         Selection.NumberFormat = "0%"
         ' Border anpassen
-        Worksheets(actSheetName).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Select
+        Worksheets(actSheetName).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Select
         Call setBorder(False, True, True, True, True, xlMedium, 0, True)
         
         Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select
@@ -203,18 +217,18 @@ Private Function FillSegmentPages()
     For actSheet = 0 To CfgMaxSheets
     
         ' Set name for further processing
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, actSheet * 2).Value
         If actSheetName = "" Then
             Exit Function
         End If
-        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, actSheet * 2).Value
+        numOfSubEx = Worksheets(WbNameConfig).range(CfgExerCount).Offset(0, actSheet * 2).Value
         span = numOfSubEx + 2 ' Anzahl der Teilaufgaben + 3 Spalten (Index,Name,Summe)
         
         '------------------------------------
         ' Header-Text
         '------------------------------------
-        Worksheets(actSheetName).Cells(CfgRowStart, CfgColStart).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiTitle).Column).Address, "$")(1) & CStr(Range(CfgAbiTitle).row) & "&"" ""&" & "YEAR('" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiDate).Column).Address, "$")(1) & CStr(Range(CfgAbiDate).row) & ")"
-        Worksheets(actSheetName).Cells(CfgRowStart, CfgColStart + span).Formula = "=""Kurs ""&'" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiClass).Column).Address, "$")(1) & CStr(Range(CfgAbiClass).row)
+        Worksheets(actSheetName).Cells(CfgRowStart, CfgColStart).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiTitle).Column).Address, "$")(1) & CStr(range(CfgAbiTitle).row) & "&"" ""&" & "YEAR('" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiDate).Column).Address, "$")(1) & CStr(range(CfgAbiDate).row) & ")"
+        Worksheets(actSheetName).Cells(CfgRowStart, CfgColStart + span).Formula = "=""Kurs ""&'" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiClass).Column).Address, "$")(1) & CStr(range(CfgAbiClass).row)
         Worksheets(actSheetName).Cells(CfgRowStart + 1, CfgColStart).Value = actSheetName
         
         '------------------------------------
@@ -222,17 +236,18 @@ Private Function FillSegmentPages()
         '------------------------------------
         Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1).Value = "Name"
         For i = 0 To numOfSubEx - 1
-            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + i).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgFirstSect).Column + actSheet * 2).Address, "$")(1) & CStr(2 + Range(CfgFirstSect).row + i)
-            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgFirstSect).Column + (actSheet * 2) + 1).Address, "$")(1) & CStr(2 + Range(CfgFirstSect).row + i)
+            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + i).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgFirstSect).Column + actSheet * 2).Address, "$")(1) & CStr(2 + range(CfgFirstSect).row + i)
+            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgFirstSect).Column + (actSheet * 2) + 1).Address, "$")(1) & CStr(2 + range(CfgFirstSect).row + i)
         Next i
         Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Value = "Summe"
-        Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "=SUM(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & ")"
+        Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgExerCount).Offset(0, (actSheet * 2) + 1).Column).Address, "$")(1) & CStr(range(CfgExerCount).row)
+        
         '------------------------------------
         ' Namen
         '------------------------------------
         For i = 0 To gNumOfPupils - 1
-            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart).Value = Worksheets(WbNameConfig).Range(CfgFirstPupi).Offset(i, 0).Value
-            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + 1).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgFirstPupi).Column + 1).Address, "$")(1) & CStr(Range(CfgFirstPupi).row + i) & "&"", ""&'" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgFirstPupi).Column + 2).Address, "$")(1) & CStr(Range(CfgFirstPupi).row + i)
+            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart).Value = Worksheets(WbNameConfig).range(CfgFirstPupi).Offset(i, 0).Value
+            Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + 1).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgFirstPupi).Column + 1).Address, "$")(1) & CStr(range(CfgFirstPupi).row + i) & "&"", ""&'" & WbNameConfig & "'!" & Split(Cells(1, range(CfgFirstPupi).Column + 2).Address, "$")(1) & CStr(range(CfgFirstPupi).row + i)
         Next i
         
         '------------------------------------
@@ -265,14 +280,14 @@ Private Function PaintGradePage()
         Worksheets(WbNameGradeSheet).Delete
     End If
     ' Create new sheet
-    Worksheets.Add(Before:=Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, 0).Value)).Name = WbNameGradeSheet
+    Worksheets.Add(Before:=Worksheets(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, 0).Value)).name = WbNameGradeSheet
     Worksheets(WbNameGradeSheet).Tab.color = gClrTabGrades
     
     ' Count actual sheets
     Dim sheetCnt As Integer
     sheetCnt = 0
     For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+        If WSExists(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value) Then
             sheetCnt = sheetCnt + 1
         End If
     Next i
@@ -303,53 +318,53 @@ Private Function PaintGradePage()
     Next i
     
     ' Abi Zelle
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart, CfgColStart), Cells(CfgRowStart, CfgColStart + floor(sheetCnt / 2#))).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart, CfgColStart), Cells(CfgRowStart, CfgColStart + floor(sheetCnt / 2#))).Select
     Call setBorder(False, True, False, True, False, xlMedium, gClrHeader, True, xlLeft, xlCenter)
     Selection.Font.Bold = True
     ' Kurs Zelle
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart, CfgColStart + floor(sheetCnt / 2#) + 1), Cells(CfgRowStart, CfgColStart + sheetCnt + 4)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart, CfgColStart + floor(sheetCnt / 2#) + 1), Cells(CfgRowStart, CfgColStart + sheetCnt + 4)).Select
     Call setBorder(False, False, True, True, False, xlMedium, gClrHeader, True, xlRight, xlCenter)
     Selection.Font.Bold = True
     ' Bereich Zelle
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + 1, CfgColStart), Cells(CfgRowStart + 2, CfgColStart + sheetCnt + 4)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + 1, CfgColStart), Cells(CfgRowStart + 2, CfgColStart + sheetCnt + 4)).Select
     Call setBorder(False, True, True, False, True, xlMedium, gClrHeader, True, xlHAlignCenterAcrossSelection, xlCenter)
     Selection.Font.Bold = True
     Selection.Font.Size = 12
     
     ' Überschrift Namen
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1)).Select
     Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True)
     ' Überschrift Summe
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + sheetCnt + 2)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + sheetCnt + 2)).Select
     Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, False, xlCenter, xlBottom)
     ' Überschrift Punkte / Note
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + sheetCnt + 3)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2), Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + sheetCnt + 3)).Select
     Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlBottom)
     
     ' Namen
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx - 1)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx - 1)).Select
     Call setBorder(False, True, True, True, True, xlThin, gClrTheme2, False)
     ' Punkte-Bereich
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt - 1)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt - 1)).Select
     Call setBorder(False, True, True, True, True, xlThin, gClrTheme2, False, xlCenter, xlCenter)
     For i = 0 To sheetCnt - 1
-        Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i)).Select
+        Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i)).Select
     Next i
     ' Summe-Bereich
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + sheetCnt + 2), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + sheetCnt + 2)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + sheetCnt + 2), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + sheetCnt + 2)).Select
     Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, False, xlCenter, xlCenter)
     ' Punkte / Noten Bereich
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + sheetCnt + 3), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + sheetCnt + 4)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + sheetCnt + 3), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + sheetCnt + 4)).Select
     Call setBorder(False, True, True, True, True, xlThin, gClrTheme2, False, xlCenter, xlCenter)
     Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlCenter)
         
     ' Prozentualer Punkteschnitt
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + sheetCnt + 4)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + sheetCnt + 4)).Select
     Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlCenter)
     Selection.style = "Percent"
         
     ' Border anpassen
-    Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2)).Select
+    Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2)).Select
     Call setBorder(False, True, True, True, True, xlMedium, 0, True)
         
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select
@@ -364,7 +379,7 @@ Private Function FillGradePage()
     Dim sheetCnt As Integer
     sheetCnt = 0
     For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+        If WSExists(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value) Then
             sheetCnt = sheetCnt + 1
         End If
     Next i
@@ -372,8 +387,8 @@ Private Function FillGradePage()
     '------------------------------------
     ' Header-Text
     '------------------------------------
-    Worksheets(WbNameGradeSheet).Cells(CfgRowStart, CfgColStart).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiTitle).Column).Address, "$")(1) & CStr(Range(CfgAbiTitle).row) & "&"" ""&" & "YEAR('" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiDate).Column).Address, "$")(1) & CStr(Range(CfgAbiDate).row) & ")"
-    Worksheets(WbNameGradeSheet).Cells(CfgRowStart, CfgColStart + sheetCnt + 4).Formula = "=""Kurs ""&'" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiClass).Column).Address, "$")(1) & CStr(Range(CfgAbiClass).row)
+    Worksheets(WbNameGradeSheet).Cells(CfgRowStart, CfgColStart).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiTitle).Column).Address, "$")(1) & CStr(range(CfgAbiTitle).row) & "&"" ""&" & "YEAR('" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiDate).Column).Address, "$")(1) & CStr(range(CfgAbiDate).row) & ")"
+    Worksheets(WbNameGradeSheet).Cells(CfgRowStart, CfgColStart + sheetCnt + 4).Formula = "=""Kurs ""&'" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiClass).Column).Address, "$")(1) & CStr(range(CfgAbiClass).row)
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + 1, CfgColStart).Value = WbNameGradeSheet
     
     '------------------------------------
@@ -381,11 +396,11 @@ Private Function FillGradePage()
     '------------------------------------
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1).Value = "Name"
     For i = 0 To sheetCnt - 1
-        Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + i).Value = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value
-        Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgExerCount).Offset(0, (i * 2) + 1).Column).Address, "$")(1) & CStr(Range(CfgExerCount).row)
+        Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + i).Value = Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value
+        Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgExerCount).Offset(0, (i * 2) + 1).Column).Address, "$")(1) & CStr(range(CfgExerCount).row)
     Next i
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + sheetCnt).Value = "Summe"
-    Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt).Formula = "=SUM(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + 5).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & ")"
+    Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt).Formula = "=SUM(" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & ":" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + CfgMaxSheets).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstEx + 1) & ")"
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Value = "Punkte"
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2).Value = "Note"
     Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 3).Value = "uiiii"
@@ -394,8 +409,8 @@ Private Function FillGradePage()
     ' Namen
     '------------------------------------
     For i = 0 To gNumOfPupils - 1
-        Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart).Value = Worksheets(WbNameConfig).Range(CfgFirstPupi).Offset(i, 0).Value
-        Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + 1).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgFirstPupi).Column + 1).Address, "$")(1) & CStr(Range(CfgFirstPupi).row + i) & "&"", ""&'" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgFirstPupi).Column + 2).Address, "$")(1) & CStr(Range(CfgFirstPupi).row + i)
+        Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart).Value = Worksheets(WbNameConfig).range(CfgFirstPupi).Offset(i, 0).Value
+        Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + 1).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgFirstPupi).Column + 1).Address, "$")(1) & CStr(range(CfgFirstPupi).row + i) & "&"", ""&'" & WbNameConfig & "'!" & Split(Cells(1, range(CfgFirstPupi).Column + 2).Address, "$")(1) & CStr(range(CfgFirstPupi).row + i)
     Next i
     
     '------------------------------------
@@ -416,9 +431,9 @@ Private Function FillGradePage()
     Dim u As Integer
     For u = 0 To sheetCnt - 1
         ' Anzahl der Teilaufgaben steht in Config =SVERWEIS(C5;'Infini B'!$C$7:$R$29;16;0)
-        If Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, u * 2).Value <> "" Then
+        If Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, u * 2).Value <> "" Then
             For i = 0 To gNumOfPupils - 1
-                Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + CfgColOffsetFirstEx + u).Formula = "=VLOOKUP(" & Split(Cells(1, CfgColStart + 1).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + i) & ",'" & Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, u * 2).Value & "'!" & Split(Cells(1, CfgColStart + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, u * 2).Value).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & "," & CfgColOffsetFirstEx + Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, u * 2).Value & ",0)"
+                Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + CfgColOffsetFirstEx + u).Formula = "=VLOOKUP(" & Split(Cells(1, CfgColStart + 1).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + i) & ",'" & Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, u * 2).Value & "'!" & Split(Cells(1, CfgColStart + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + Worksheets(WbNameConfig).range(CfgExerCount).Offset(0, u * 2).Value).Address, "$")(1) & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & "," & CfgColOffsetFirstEx + Worksheets(WbNameConfig).range(CfgExerCount).Offset(0, u * 2).Value & ",0)"
             Next i
         End If
     Next u
@@ -442,7 +457,7 @@ Private Function FillGradePage()
     Next i
     Worksheets(WbNameGradeSheet).Columns(CfgColStart + CfgColOffsetFirstEx + sheetCnt + 3).Hidden = vbTrue
     
-    Worksheets(WbNameGradeSheet).Range("A1").Select
+    Worksheets(WbNameGradeSheet).range("A1").Select
     
     
 End Function
@@ -462,7 +477,7 @@ Public Function UpdateUpDownColors()
     Dim sheetCnt As Integer
     sheetCnt = 0
     For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+        If WSExists(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value) Then
             sheetCnt = sheetCnt + 1
         End If
     Next i
@@ -470,7 +485,7 @@ Public Function UpdateUpDownColors()
     ' Durch die Spalte durchgehen und Farbe setzen
     If Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 3).Value = "uiiii" Then
         For i = 0 To gNumOfPupils - 1
-            Worksheets(WbNameGradeSheet).Range(Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1), Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2)).Select
+            Worksheets(WbNameGradeSheet).range(Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1), Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2)).Select
             If StrComp(Worksheets(WbNameGradeSheet).Cells(CfgRowStart + CfgRowOffsetFirstPupil + i, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 3).Text, "--") = 0 Then
                 With Selection
                     .Interior.color = gClrMinus2
@@ -496,7 +511,7 @@ Public Function UpdateUpDownColors()
     Else
         MsgBox ("Corrupt!")
     End If
-    Worksheets(WbNameGradeSheet).Range("A1").Select
+    Worksheets(WbNameGradeSheet).range("A1").Select
     
     If DevMode <> 1 Then
         Worksheets(WbNameGradeSheet).Protect Password:=WbPw
@@ -512,9 +527,9 @@ Public Function LockSheets()
     If DevMode <> 1 Then
         Dim i As Integer
         For i = 0 To CfgMaxSheets
-            If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
-                Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).Protect Password:=WbPw
-                Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).EnableSelection = xlUnlockedCells
+            If WSExists(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value) Then
+                Worksheets(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value).Protect Password:=WbPw
+                Worksheets(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value).EnableSelection = xlUnlockedCells
             End If
         Next i
         
@@ -536,9 +551,9 @@ Public Function UnlockSheets()
     If DevMode <> 1 Then
         Dim i As Integer
         For i = 0 To CfgMaxSheets
-            If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
-                Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).Unprotect Password:=WbPw
-                Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value).EnableSelection = xlUnlockedCells
+            If WSExists(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value) Then
+                Worksheets(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value).Unprotect Password:=WbPw
+                Worksheets(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value).EnableSelection = xlUnlockedCells
             End If
         Next i
         
@@ -554,3 +569,23 @@ Public Function UnlockSheets()
     End If
     
 End Function
+
+Public Function CheckForSelEx()
+
+    Dim tblIdx As Integer
+    Dim SelCfg As String
+    Dim found As Boolean
+    
+    found = False
+    For tblIdx = 0 To CfgMaxSheets
+        SelCfg = Worksheets(WbNameConfig).range(CfgSelEx).Offset(0, tblIdx * 2).MergeArea.Cells(1, 1).Text
+        If StrComp(SelCfg, "Ja") = 0 Then
+            found = True
+            Exit For
+        End If
+    Next tblIdx
+    
+    CheckForSelEx = found
+    
+End Function
+
