@@ -331,8 +331,8 @@ Function CheckForUpdate(currentVersion As String)
             ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Update available! " + Version + " " + ChrW(8594) + " " + latestVersion
             ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(0, 138, 255) ' Blue
         ElseIf IsVersionGreater(Version, latestVersion) Then
-            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Futuristic! Nice! " + Version + " " + ChrW(8592) + " " + latestVersion
-            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
+            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Pre-Release! " + Version
+            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(175, 80, 0) ' Orange
         Else
             ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = ChrW(10003) + " " + Version
             ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
