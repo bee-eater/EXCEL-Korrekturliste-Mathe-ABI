@@ -25,6 +25,27 @@ Public Function ExportSourceFiles()
 
 End Function
 
+Public Function IsVBProjectAccessible() As Boolean
+    On Error Resume Next
+    Dim test As Object
+    Set test = ThisWorkbook.VBProject.VBComponents
+    IsVBProjectAccessible = (Err.Number = 0)
+    On Error GoTo 0
+End Function
+
+Public Function EnsureVBAccess()
+    
+    If Not IsVBProjectAccessible() Then
+        MsgBox "Bitte aktiviere 'Zugriff auf das VBA-Projektmodell vertrauen':" & vbCrLf & _
+               "Datei > Optionen > Trust Center > Einstellungen für das Trust Center > Makroeinstellungen", _
+               vbExclamation, "Access Required"
+        EnsureVBAccess = False
+        Exit Function
+    End If
+    EnsureVBAccess = True
+    
+End Function
+
 Private Function ToFileExtension(vbeComponentType As vbext_ComponentType) As String
     
     ' Dateiendung entsprechend Typ zurückgeben

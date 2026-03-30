@@ -128,9 +128,9 @@ Public Function PaintSelXCfgPage()
     Call setBorder(False, True, True, True, True, xlMedium, 0, True)
     
     ' Button hinzufügen
-    Call AddUpdateButton(Worksheets(actSheetName).Cells(CfgRowStart, CfgColStart + CfgColOffsetFirstEx + colOffset + 1), "SelExUpdate")
+    'Call AddUpdateButton(Worksheets(actSheetName).Cells(CfgRowStart, CfgColStart + CfgColOffsetFirstEx + colOffset + 1), "SelExUpdate")
     ' Button handler hinzufügen
-    Call InjectWorksheet_ButtonHandler(Worksheets(actSheetName))
+    'Call InjectWorksheet_ButtonHandler(Worksheets(actSheetName))
     
     ' Kommentarfeld für HowTo
     Dim txtCommentFieldWidth, txtCommentFieldHeight As Integer
@@ -139,7 +139,7 @@ Public Function PaintSelXCfgPage()
     Worksheets(actSheetName).range(Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1), Cells(CfgRowStart + 4 + txtCommentFieldHeight - 1, CfgColStart + CfgColOffsetFirstEx + colOffset + 1 + txtCommentFieldWidth)).Select
     Call setBorder(True, True, True, True, True, xlMedium, 0, True, xlHAlignLeft, xlVAlignCenter)
     Worksheets(actSheetName).Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).WrapText = True
-    Worksheets(actSheetName).Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).Value = "In nebenstehender Tabelle, alle gewählten Aufgaben des Schülers mit ""x"" selektieren. Anschließend Button anklicken!"
+    Worksheets(actSheetName).Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).Value = "In nebenstehender Tabelle, alle gewählten Aufgaben des Schülers mit ""x"" selektieren. Anschließend den 'Wahlaufgaben aktualisieren' Button auf der Config-Seite anklicken!"
     
     
     Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select

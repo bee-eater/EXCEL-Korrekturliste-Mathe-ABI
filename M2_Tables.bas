@@ -2,7 +2,11 @@ Attribute VB_Name = "M2_Tables"
 Option Explicit
 
 Public Function CreateTables()
-
+    
+    'If Not EnsureVBAccess() Then
+    '    Exit Function
+    'End If
+    
     Call Init
     
     If makeSure Then
