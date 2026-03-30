@@ -9,6 +9,12 @@ Excel-Tabelle als Korrekturhilfe des bayerischen Mathe-Abis.
 - Export der Ergebnisse als druckfertiges PDF
 - Notenschlüssel auf eigenem Tab hinterlegt
 
+## EXCEL Einstellunge
+
+- In der aktuellen Version muss der Zugriff auf das VBA-Projektmodell aktiviert sein. Dazu in Excel auf "Datei" -> "Optionen" -> "Trust Center" -> "Einstellungen für das Trust Center" -> "Makroeinstellungen" -> "Zugriff auf das VBA-Projektmodell vertrauen" aktivieren.
+
+![Excel Trust Center](./img/EXCEL_itWNgLYGGM.png)
+
 ## 💖 Help Me Keep This Project Going
 
 Maintaining and improving this project takes time, energy, and resources. If you like the idea and want to see the project progressing and released, consider supporting its development! Ideally you're a frontend (react) or backend (python) dev and you're in need of a tool like this!
