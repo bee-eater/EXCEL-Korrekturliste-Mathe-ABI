@@ -139,7 +139,7 @@ Public Function PaintSelXCfgPage()
     Worksheets(actSheetName).range(Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1), Cells(CfgRowStart + 4 + txtCommentFieldHeight - 1, CfgColStart + CfgColOffsetFirstEx + colOffset + 1 + txtCommentFieldWidth)).Select
     Call setBorder(True, True, True, True, True, xlMedium, 0, True, xlHAlignLeft, xlVAlignCenter)
     Worksheets(actSheetName).Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).WrapText = True
-    Worksheets(actSheetName).Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).Value = "In nebenstehender Tabelle, alle gewählten aufgaben des Schülers mit ""x"" selektieren. Anschließend Button anklicken!"
+    Worksheets(actSheetName).Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).Value = "In nebenstehender Tabelle, alle gewählten Aufgaben des Schülers mit ""x"" selektieren. Anschließend Button anklicken!"
     
     
     Worksheets(actSheetName).Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select
