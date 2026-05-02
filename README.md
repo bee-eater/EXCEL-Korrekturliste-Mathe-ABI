@@ -23,4 +23,4 @@ Maintaining and improving this project takes time, energy, and resources. If you
   - ❤️ [Sponsor me on GitHub](https://github.com/sponsors/bee-eater)
   - 🧡 [Donate via PayPal](https://www.paypal.com/donate/?hosted_button_id=MUS7QJU8YB9CY)
 
-Your support makes a real difference — thank you!
+Don't feel obligated to pay anything! I'm a fan and a user of the open source community! Shout me a coffee if you like and the list helped you or saved you some hours!
