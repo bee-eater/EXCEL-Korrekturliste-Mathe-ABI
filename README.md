@@ -11,11 +11,11 @@ Excel-Tabelle als Korrekturhilfe des bayerischen Mathe-Abis.
 
 ## 💖 Help Me Keep This Project Going
 
-Maintaining and improving this project takes time, energy, and resources. If you like the idea and want to see the project progressing and released, consider supporting its development! Ideally you're a frontend (react) or backend (python) dev and you're in need of a tool like this!
+Maintaining and improving this project takes time, energy, and resources. If you like the idea and want to see the project progressing, create issues for required changes to let me know! Ideally as soon as possible. :-)
 
 ## 🙌 Ways You Can Help
 
-- **Contribute** – Are you a frontend or backend developer? Let me know if you want to contribute!
+- **Contribute** – If there are open issues and you know your way around EXCEL and VBA feel free to contribute!
 - **Share the project** – Spread the word!
 - **Open issues** – Found a bug or have a feature suggestion? Open an issue and let me know!
 - **Support financially** – If you’d like to support this work directly, consider:
