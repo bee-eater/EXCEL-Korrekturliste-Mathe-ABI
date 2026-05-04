@@ -402,27 +402,37 @@ Private Function PaintGradePage()
         Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlBottom)
     End With
 
-    ' Namen
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx - 1))
-        .Select
-        Call setBorder(False, True, True, True, True, xlThin, gClrTheme2, False)
-    End With
-    ' Punkte-Bereich (the original per-column loop only selected each column with no side-effect – removed)
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt - 1))
-        .Select
-        Call setBorder(False, True, True, True, True, xlThin, gClrTheme2, False, xlCenter, xlCenter)
-    End With
-    ' Summe-Bereich
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + sheetCnt + 2), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + sheetCnt + 2))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, False, xlCenter, xlCenter)
-    End With
-    ' Punkte / Noten Bereich
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + sheetCnt + 3), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + sheetCnt + 4))
-        .Select
-        Call setBorder(False, True, True, True, True, xlThin, gClrTheme2, False, xlCenter, xlCenter)
-        Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlCenter)
-    End With
+    ' Schüler-Zeilen mit alternierenden Hintergrundfarben
+    Dim iPupil As Integer
+    Dim rowClr As Long
+    For iPupil = 0 To gNumOfPupils - 1
+        If iPupil Mod 2 = 0 Then
+            rowClr = gClrTheme2
+        Else
+            rowClr = gClrTheme2a
+        End If
+        ' Namen
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx - 1))
+            .Select
+            Call setBorder(False, True, True, True, True, xlThin, rowClr, False)
+        End With
+        ' Punkte-Bereich
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx + sheetCnt - 1))
+            .Select
+            Call setBorder(False, True, True, True, True, xlThin, rowClr, False, xlCenter, xlCenter)
+        End With
+        ' Summe-Bereich
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 2), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 2))
+            .Select
+            Call setBorder(False, True, True, True, True, xlMedium, rowClr, False, xlCenter, xlCenter)
+        End With
+        ' Punkte / Noten Bereich
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 3), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 4))
+            .Select
+            Call setBorder(False, True, True, True, True, xlThin, rowClr, False, xlCenter, xlCenter)
+            Call setBorder(False, True, True, True, True, xlMedium, rowClr, True, xlCenter, xlCenter)
+        End With
+    Next iPupil
 
     ' Prozentualer Punkteschnitt
     With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + sheetCnt + 4))
@@ -631,7 +641,11 @@ Public Function UpdateUpDownColors()
             ElseIf StrComp(upDownText, "++") = 0 Then
                 clr = gClrPlus2
             Else
-                clr = gClrTheme1
+                If i Mod 2 = 0 Then
+                    clr = gClrTheme2
+                Else
+                    clr = gClrTheme2a
+                End If
             End If
             ws.Range(ws.Cells(pupilRow, colPts1), ws.Cells(pupilRow, colPts2)).Interior.color = clr
         Next i
