@@ -182,27 +182,37 @@ Private Function PaintSegmentPages()
             Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, False, xlCenter, xlBottom)
         End With
 
-        ' Namen
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx - 1))
-            .Select
-            Call setBorder(False, True, True, True, True, xlThin, gClrTheme1, False)
-        End With
-        ' Punkte-Bereich
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1))
-            .Select
-            Call setBorder(False, True, True, True, True, xlThin, RGB(255, 255, 255), False, xlCenter, xlCenter)
-            .Locked = False
-        End With
+        ' Schüler-Zeilen mit alternierenden Hintergrundfarben
+        Dim iPupilSect As Integer
+        Dim rowClrSect As Long
+        For iPupilSect = 0 To gNumOfPupils - 1
+            If iPupilSect Mod 2 = 0 Then
+                rowClrSect = gClrTheme2
+            Else
+                rowClrSect = gClrTheme2a
+            End If
+            ' Namen
+            With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + CfgColOffsetFirstEx - 1))
+                .Select
+                Call setBorder(False, True, True, True, True, xlThin, rowClrSect, False)
+            End With
+            ' Punkte-Bereich (bleibt weiß zur Eingabe)
+            With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1))
+                .Select
+                Call setBorder(False, True, True, True, True, xlThin, RGB(255, 255, 255), False, xlCenter, xlCenter)
+                .Locked = False
+            End With
+            ' Summe-Bereich
+            With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + span), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + span))
+                .Select
+                Call setBorder(False, True, True, True, True, xlMedium, rowClrSect, False, xlCenter, xlCenter)
+            End With
+        Next iPupilSect
         For i = 0 To numOfSubEx - 1
             ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), _
                      ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i)).Select
             setUpperLimit (CStr(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Address))
         Next i
-        ' Summe-Bereich
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + span), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + span))
-            .Select
-            Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, False, xlCenter, xlCenter)
-        End With
 
         ' Prozentualer Punkteschnitt
         With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + span))
