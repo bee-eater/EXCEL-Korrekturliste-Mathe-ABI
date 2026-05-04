@@ -4,9 +4,9 @@ Option Explicit
 '-----------------------------------------------------
 ' KONSTANTEN
 '-----------------------------------------------------
-Public Const DevMode = 1
+Public Const DevMode = 0
 Public Const WbPw = ""
-Public Const Version = "v2.2.0"
+Public Const Version = "v2.2.0-beta"
 
 Public Const WbNameConfig = "Config"
 Public Const WbNameSelExConfig = "ConfigW"
@@ -85,7 +85,7 @@ Public Function Init()
     gClrHeader = RGB(196, 215, 155)
     gClrTheme1 = RGB(217, 217, 217)
     gClrTheme2 = RGB(217, 217, 217)
-    gClrTheme2a = RGB(242, 242, 242)
+    gClrTheme2a = RGB(232, 232, 232)
     
     gClrBg1 = RGB(255, 255, 255)
     gClrBg2 = RGB(240, 240, 240)

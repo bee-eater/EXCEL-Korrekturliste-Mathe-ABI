@@ -5,7 +5,7 @@ Function WSExists(n As String) As Boolean
   Dim ws As Worksheet
   WSExists = False
   For Each ws In Worksheets
-    If n = ws.name Then
+    If n = ws.Name Then
       WSExists = True
       Exit Function
     End If
@@ -19,7 +19,7 @@ Public Function ExportSourceFiles()
     Dim component As VBComponent
     For Each component In Application.VBE.ActiveVBProject.VBComponents
         If component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule Then
-            component.Export destPath & component.name & ToFileExtension(component.Type)
+            component.Export destPath & component.Name & ToFileExtension(component.Type)
         End If
     Next
 
@@ -194,7 +194,7 @@ Public Sub TestDatenUebernehmen()
     Application.ScreenUpdating = False
     
     Dim ws As String
-    ws = ActiveSheet.name
+    ws = ActiveSheet.Name
     
     Worksheets("TestData").Unprotect Password:=WbPw
 

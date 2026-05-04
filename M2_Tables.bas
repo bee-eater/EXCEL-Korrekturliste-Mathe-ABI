@@ -63,7 +63,7 @@ Private Function makeSure() As Boolean
     Dim found As Boolean
     For Each ws In ThisWorkbook.Worksheets
         For i = 0 To CfgMaxSheets
-            If StrComp(ws.name, Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Text) = 0 Then
+            If StrComp(ws.Name, Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Text) = 0 Then
                 found = True
             End If
         Next i
@@ -115,7 +115,7 @@ Private Function PaintSegmentPages()
             Worksheets(actSheetName).Delete
         End If
         ' Create new sheet and cache reference
-        Worksheets.Add(Before:=Worksheets(WbNameConfig)).name = actSheetName
+        Worksheets.Add(Before:=Worksheets(WbNameConfig)).Name = actSheetName
         Set ws = Worksheets(actSheetName)
         ws.Tab.color = gClrTabSections
 
@@ -183,48 +183,94 @@ Private Function PaintSegmentPages()
         End With
 
         ' Sch¸ler-Zeilen mit alternierenden Hintergrundfarben
+        ' ZK/DK rows are painted inline at their final stride-aware positions ó
+        ' no row insertions needed on a fresh sheet (major perf win).
         Dim iPupilSect As Integer
         Dim rowClrSect As Long
+        Dim strideSect As Integer
+        Dim hasZKSect As Boolean, hasDKSect As Boolean
+        Dim physRowSect As Long
+        strideSect = PupilStride()
+        hasZKSect = Len(Trim(Worksheets(WbNameConfig).Range(CfgZK).Value)) > 0
+        hasDKSect = hasZKSect And Len(Trim(Worksheets(WbNameConfig).Range(CfgDK).Value)) > 0
         For iPupilSect = 0 To gNumOfPupils - 1
+            physRowSect = CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect * strideSect
             If iPupilSect Mod 2 = 0 Then
                 rowClrSect = gClrTheme2
             Else
                 rowClrSect = gClrTheme2a
             End If
             ' Namen
-            With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + CfgColOffsetFirstEx - 1))
+            With ws.Range(ws.Cells(physRowSect, CfgColStart), ws.Cells(physRowSect, CfgColStart + CfgColOffsetFirstEx - 1))
                 .Select
                 Call setBorder(False, True, True, True, True, xlThin, rowClrSect, False)
             End With
             ' Punkte-Bereich (bleibt weiﬂ zur Eingabe)
-            With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1))
+            With ws.Range(ws.Cells(physRowSect, CfgColStart + CfgColOffsetFirstEx), ws.Cells(physRowSect, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1))
                 .Select
                 Call setBorder(False, True, True, True, True, xlThin, RGB(255, 255, 255), False, xlCenter, xlCenter)
                 .Locked = False
             End With
-            ' Summe-Bereich
-            With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + span), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect, CfgColStart + span))
+            ' Summe-Bereich ó bottom border intentionally omitted: the ZK row's hairline
+            ' xlEdgeTop governs that shared border; outer block bottom is set by the
+            ' block border pass below, avoiding a spurious thick line before ZK rows.
+            With ws.Range(ws.Cells(physRowSect, CfgColStart + span), ws.Cells(physRowSect, CfgColStart + span))
                 .Select
-                Call setBorder(False, True, True, True, True, xlMedium, rowClrSect, False, xlCenter, xlCenter)
+                Call setBorder(False, True, True, True, False, xlMedium, rowClrSect, False, xlCenter, xlCenter)
             End With
+            ' ZK / DK rows painted directly ó sheet is fresh, no insertion required
+            If hasZKSect Then
+                Call FormatZKDKRow(ws, physRowSect + 1, numOfSubEx, span, "ZK", rowClrSect, hasDKSect)
+            End If
+            If hasDKSect Then
+                Call FormatZKDKRow(ws, physRowSect + 2, numOfSubEx, span, "DK", rowClrSect)
+            End If
         Next iPupilSect
         For i = 0 To numOfSubEx - 1
             ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), _
-                     ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i)).Select
+                     ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect - 1, CfgColStart + CfgColOffsetFirstEx + i)).Select
             setUpperLimit (CStr(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Address))
         Next i
 
-        ' Prozentualer Punkteschnitt
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + span))
+        ' Prozentualer Punkteschnitt ó placed after the full physical block
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect, CfgColStart + span))
             .Select
             Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, True, xlCenter, xlCenter)
             .NumberFormat = "0%"
         End With
-        ' Border anpassen
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1))
+        ' Border anpassen ó full physical block
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1))
             .Select
             Call setBorder(False, True, True, True, True, xlMedium, 0, True)
         End With
+        ' Re-apply outer border + inside verticals across the full block incl. sum column
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), _
+                      ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect - 1, CfgColStart + span))
+            .Borders(xlEdgeLeft).LineStyle = xlContinuous
+            .Borders(xlEdgeLeft).Weight = xlMedium
+            .Borders(xlEdgeLeft).ColorIndex = 1
+            .Borders(xlEdgeRight).LineStyle = xlContinuous
+            .Borders(xlEdgeRight).Weight = xlMedium
+            .Borders(xlEdgeRight).ColorIndex = 1
+            .Borders(xlEdgeTop).LineStyle = xlContinuous
+            .Borders(xlEdgeTop).Weight = xlMedium
+            .Borders(xlEdgeTop).ColorIndex = 1
+            .Borders(xlEdgeBottom).LineStyle = xlContinuous
+            .Borders(xlEdgeBottom).Weight = xlMedium
+            .Borders(xlEdgeBottom).ColorIndex = 1
+            .Borders(xlInsideVertical).LineStyle = xlContinuous
+            .Borders(xlInsideVertical).Weight = xlThin
+            .Borders(xlInsideVertical).ColorIndex = 1
+        End With
+        ' Re-force sum column left border to xlMedium (overridden by xlInsideVertical)
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + span), _
+                      ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect - 1, CfgColStart + span))
+            .Borders(xlEdgeLeft).LineStyle = xlContinuous
+            .Borders(xlEdgeLeft).Weight = xlMedium
+            .Borders(xlEdgeLeft).ColorIndex = 1
+        End With
+        ' Define PupilBlock named range (replaces the AddZKDKRows call)
+        Call DefinePupilBlockName(ws, numOfSubEx, gNumOfPupils * strideSect)
 
         ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select
 
@@ -254,9 +300,6 @@ Private Function FillSegmentPages()
     Dim cfgPupiFirstRow As Long ' first pupil row in config
     Dim arrHdr1() As Variant
     Dim arrHdr2() As Variant
-    Dim arrIdx() As Variant
-    Dim arrNames() As Variant
-    Dim arrSums() As Variant
 
     For actSheet = 0 To CfgMaxSheets
 
@@ -307,26 +350,20 @@ Private Function FillSegmentPages()
         '------------------------------------
         ' Namen
         '------------------------------------
-        ReDim arrIdx(1 To gNumOfPupils, 1 To 1)
-        ReDim arrNames(1 To gNumOfPupils, 1 To 1)
         For i = 0 To gNumOfPupils - 1
-            arrIdx(i + 1, 1) = Worksheets(WbNameConfig).Range(CfgFirstPupi).Offset(i, 0).Value
-            arrNames(i + 1, 1) = "='" & WbNameConfig & "'!" & colPupiFirst & CStr(cfgPupiFirstRow + i) & "&"", ""&'" & WbNameConfig & "'!" & colPupiLast & CStr(cfgPupiFirstRow + i)
+            Dim physRow As Long
+            physRow = CfgRowStart + CfgRowOffsetFirstPupil + i * PupilStride()
+            ws.Cells(physRow, CfgColStart).Value = Worksheets(WbNameConfig).Range(CfgFirstPupi).Offset(i, 0).Value
+            ws.Cells(physRow, CfgColStart + 1).Formula = "='" & WbNameConfig & "'!" & colPupiFirst & CStr(cfgPupiFirstRow + i) & "&"", ""&'" & WbNameConfig & "'!" & colPupiLast & CStr(cfgPupiFirstRow + i)
         Next i
-        ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), _
-                 ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart)).Value = arrIdx
-        ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + 1), _
-                 ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + 1)).Formula = arrNames
 
         '------------------------------------
         ' Summen
         '------------------------------------
-        ReDim arrSums(1 To gNumOfPupils, 1 To 1)
         For i = 0 To gNumOfPupils - 1
-            arrSums(i + 1, 1) = "=SUM(" & colSumFirst & CStr(CfgRowStart + CfgRowOffsetFirstPupil + i) & ":" & colSumLast & CStr(CfgRowStart + CfgRowOffsetFirstPupil + i) & ")"
+            physRow = CfgRowStart + CfgRowOffsetFirstPupil + i * PupilStride()
+            ws.Cells(physRow, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "=SUM(" & colSumFirst & CStr(physRow) & ":" & colSumLast & CStr(physRow) & ")"
         Next i
-        ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + numOfSubEx), _
-                 ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx)).Formula = arrSums
 
         FillSegmentPages_WriteSubPercentagFormulas ws, numOfSubEx
 
@@ -345,7 +382,7 @@ Private Function PaintGradePage()
         Worksheets(WbNameGradeSheet).Delete
     End If
     ' Create new sheet and cache reference
-    Worksheets.Add(Before:=Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, 0).Value)).name = WbNameGradeSheet
+    Worksheets.Add(Before:=Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, 0).Value)).Name = WbNameGradeSheet
     Dim ws As Worksheet
     Set ws = Worksheets(WbNameGradeSheet)
     ws.Tab.color = gClrTabGrades
@@ -751,7 +788,6 @@ Private Sub FillGradePage_WriteSectionColumns(ByVal ws As Worksheet, ByVal sheet
     Dim u As Integer, i As Integer
     Dim sectName As String
     Dim numSubEx As Integer
-    Dim colSectLast As String
     Dim arrVlookup() As Variant
 
     For u = 0 To sheetCnt - 1
@@ -759,11 +795,10 @@ Private Sub FillGradePage_WriteSectionColumns(ByVal ws As Worksheet, ByVal sheet
         If Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, u * 2).Value <> "" Then
             sectName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, u * 2).Value
             numSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, u * 2).Value
-            colSectLast = ColLetter(CfgColStart + CfgColOffsetFirstEx + numSubEx)
 
             ReDim arrVlookup(1 To gNumOfPupils, 1 To 1)
             For i = 0 To gNumOfPupils - 1
-                arrVlookup(i + 1, 1) = "=VLOOKUP(" & colNameIdx & CStr(CfgRowStart + CfgRowOffsetFirstPupil + i) & ",'" & sectName & "'!" & colNameIdx & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":$" & colSectLast & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1) & "," & CfgColOffsetFirstEx + numSubEx & ",0)"
+                arrVlookup(i + 1, 1) = "=VLOOKUP(" & colNameIdx & CStr(CfgRowStart + CfgRowOffsetFirstPupil + i) & ",'" & sectName & "'!PupilBlock," & CfgColOffsetFirstEx + numSubEx & ",0)"
             Next i
             ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + u), _
                      ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + u)).Formula = arrVlookup
@@ -798,9 +833,11 @@ Public Sub FillSegmentPages_WriteSubPercentagFormulas(ByVal ws As Worksheet, ByV
     Dim arrFormulas() As Variant
     ReDim arrFormulas(1 To 1, 1 To numOfSubEx)
 
-    ' Pre-calc rows
+    ' Pre-calc rows ó span the full physical block (pupils + ZK/DK rows)
+    Dim stride As Integer
+    stride = PupilStride()
     firstRow = CfgRowStart + CfgRowOffsetFirstPupil
-    lastRow = firstRow + gNumOfPupils - 1
+    lastRow = firstRow + gNumOfPupils * stride - 1
 
     For i = 0 To numOfSubEx - 1
 
@@ -819,12 +856,18 @@ Public Sub FillSegmentPages_WriteSubPercentagFormulas(ByVal ws As Worksheet, ByV
 
     Next i
 
-    ' Batch write
+    ' Batch write ó row after the full physical block
+    Dim pctRow As Long
+    pctRow = firstRow + gNumOfPupils * stride
     ws.Range( _
-        ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + CfgColOffsetFirstEx), _
-        ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1) _
+        ws.Cells(pctRow, CfgColStart + CfgColOffsetFirstEx), _
+        ws.Cells(pctRow, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1) _
     ).Formula = arrFormulas
 
 End Sub
+
+
+
+
 
 

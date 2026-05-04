@@ -1,4 +1,5 @@
 Attribute VB_Name = "M5_SelEx"
+
 Option Explicit
 
 Public Function PaintSelXCfgPage()
@@ -23,7 +24,7 @@ Public Function PaintSelXCfgPage()
         Worksheets(actSheetName).Delete
     End If
     ' Create new sheet and cache reference
-    Worksheets.Add(Before:=Worksheets(WbNameConfig)).name = actSheetName
+    Worksheets.Add(Before:=Worksheets(WbNameConfig)).Name = actSheetName
     Set ws = Worksheets(actSheetName)
     ws.Tab.color = gClrTabConfig
     
@@ -287,7 +288,7 @@ Public Function AddUpdateButton(targetCell As Range, onClickMacro As String)
         Height:=Application.CentimetersToPoints(1.42))
     
     With btn
-        .name = "btnSelExUpdate"
+        .Name = "btnSelExUpdate"
         .Placement = xlFreeFloating
         .PrintObject = False
     End With
@@ -321,7 +322,22 @@ Public Function SelExUpdate()
     Application.EnableEvents = False
     Application.ScreenUpdating = False
     Application.Calculation = xlCalculationManual
-    
+
+    Call ApplySelExCrosses
+
+    Application.DisplayAlerts = True
+    Application.EnableEvents = True
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+
+End Function
+
+' Applies CrossOutCell / RemoveCross to every SelEx column on every segment sheet,
+' covering all stride rows (main pupil + ZK/DK). Safe to call without a dialog.
+Public Sub ApplySelExCrosses()
+
+    If Not WSExists(WbNameSelExConfig) Then Exit Sub
+
     Dim i As Integer
     Dim u As Integer
     Dim currSht As String
@@ -331,21 +347,21 @@ Public Function SelExUpdate()
     Dim found As Boolean
     Dim wsCfg As Worksheet
     Dim wsSht As Worksheet
-    Set wsCfg = Worksheets(actSheetName)
+    Set wsCfg = Worksheets(WbNameSelExConfig)
 
-    ' So lange weiter bis leere Zelle kommt
+    Dim stride As Integer
+    stride = PupilStride()
+
     i = 0
     Do While True
         If wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Value = "" Then
             Exit Do
         End If
 
-        ' Aktuelles Blatt und aktuelle Aufgabe
         currSht = wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Value
         currTsk = wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + i).Value
         Set wsSht = Worksheets(currSht)
 
-        ' Spalte in Ziel finden
         found = False
         currCol = -1
         For u = 0 To CfgMaxExercisesPerSection - 1
@@ -355,34 +371,37 @@ Public Function SelExUpdate()
                 Exit For
             End If
         Next u
-        ' If column was not found, don't continue!
         If Not found Then
-            Exit Function
+            i = i + 1
+            GoTo NextSelExCol
         End If
 
-        ' Über jeden Schüler iterieren und auf dem passenden Worksheet
-        '  - die nicht gewählten Aufgaben sperren, hintergrund grau, rotes X rein
-        '  - die gewählten entsperren, hintergrund normal, Inhalt leeren
-        wsSht.Unprotect
+        wsSht.Unprotect Password:=WbPw
         For pLine = 0 To gNumOfPupils - 1
+            Dim physRow As Long
+            physRow = PhysicalPupilRow(pLine)
+            Dim extraRow As Integer
             If wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstPupil + pLine, CfgColStart + CfgColOffsetFirstEx + i).Value = "x" Then
-                Call RemoveCross(wsSht.Cells(CfgRowStart + CfgRowOffsetFirstPupil + pLine, currCol), skipProtect:=True)
+                Call RemoveCross(wsSht.Cells(physRow, currCol), skipProtect:=True)
+                For extraRow = 1 To stride - 1
+                    Call RemoveCross(wsSht.Cells(physRow + extraRow, currCol), skipProtect:=True)
+                Next extraRow
             Else
-                Call CrossOutCell(wsSht.Cells(CfgRowStart + CfgRowOffsetFirstPupil + pLine, currCol), skipProtect:=True)
+                Call CrossOutCell(wsSht.Cells(physRow, currCol), skipProtect:=True)
+                For extraRow = 1 To stride - 1
+                    Call CrossOutCell(wsSht.Cells(physRow + extraRow, currCol), skipProtect:=True)
+                Next extraRow
             End If
         Next pLine
-        wsSht.Protect DrawingObjects:=True, Contents:=True, Scenarios:=False
+        If DevMode <> 1 Then
+            wsSht.Protect DrawingObjects:=True, Contents:=True, Scenarios:=False
+        End If
 
+NextSelExCol:
         i = i + 1
     Loop
-    
-    Application.DisplayAlerts = True
-    Application.EnableEvents = True
-    Application.ScreenUpdating = True
-    Application.Calculation = xlCalculationAutomatic
 
-End Function
-
+End Sub
 
 Public Function CrossOutCell(cell As Range, Optional skipProtect As Boolean = False)
 
@@ -397,8 +416,18 @@ Public Function CrossOutCell(cell As Range, Optional skipProtect As Boolean = Fa
     
     If Not skipProtect Then ws.Unprotect
     
-    ' Set bg
-    cell.Interior.color = gClrBg2
+    ' Set bg - alternate based on pupil row index (stride-aware)
+    Dim pupilIdx As Long
+    Dim stride As Integer
+    stride = PupilStride()
+    pupilIdx = (cell.row - (CfgRowStart + CfgRowOffsetFirstPupil)) \ stride
+    Dim crossClr As Long
+    If pupilIdx Mod 2 = 0 Then
+        crossClr = gClrTheme2
+    Else
+        crossClr = gClrTheme2a
+    End If
+    cell.Interior.color = crossClr
     cell.ClearContents
 
     ' Remove existing cross if present
@@ -424,8 +453,8 @@ Public Function CrossOutCell(cell As Range, Optional skipProtect As Boolean = Fa
 
     ' Group and name them
     Dim grp As Shape
-    Set grp = ws.Shapes.Range(Array(line1.name, line2.name)).Group
-    grp.name = "Cross_" & cell.Address(False, False)
+    Set grp = ws.Shapes.Range(Array(line1.Name, line2.Name)).Group
+    grp.Name = "Cross_" & cell.Address(False, False)
     grp.Locked = True
 
     ' Protect drawing objects only (leaves cell editing untouched)
@@ -471,9 +500,9 @@ Public Function PupilHasSelEx(PupilIndex As Integer, Section As String, Number A
         Exit Function
     Else
 
-        ' Reihe des Schülers
-        Dim pupilRow As Integer
-        pupilRow = CfgRowStart + CfgRowOffsetFirstPupil + PupilIndex
+        ' Reihe des Schülers (stride-aware: accounts for ZK/DK rows)
+        Dim pupilRow As Long
+        pupilRow = PhysicalPupilRow(PupilIndex)
 
         Dim wsSelEx As Worksheet
         Set wsSelEx = Worksheets(WbNameSelExConfig)
@@ -505,6 +534,10 @@ Public Function PupilHasSelEx(PupilIndex As Integer, Section As String, Number A
     PupilHasSelEx = False
 
 End Function
+
+
+
+
 
 
 

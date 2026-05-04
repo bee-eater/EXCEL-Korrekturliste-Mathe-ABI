@@ -1,4 +1,5 @@
 Attribute VB_Name = "M3_Results"
+
 Option Explicit
 
 ' -- Module-level context for PaintPrintPage helpers (initialised once per run) --
@@ -29,7 +30,7 @@ Public Function CreateResults()
             If WSExists(WbNamePrintSheet) Then
                 Worksheets(WbNamePrintSheet).Delete
             End If
-            Worksheets.Add(Before:=Worksheets(WbNameConfig)).name = WbNamePrintSheet
+            Worksheets.Add(Before:=Worksheets(WbNameConfig)).Name = WbNamePrintSheet
             Worksheets(WbNamePrintSheet).Tab.color = gClrTabPrint
             
              '------------------------------------
@@ -99,7 +100,7 @@ Private Function makeSure() As Boolean
     ' Prüfen ob Sheet schon existiert
     Dim ws As Worksheet
     For Each ws In ThisWorkbook.Worksheets
-        If ws.name = WbNamePrintSheet Then
+        If ws.Name = WbNamePrintSheet Then
             ' Abfragen ob wirklich neue Tabellen erstellt werden sollen...
             Dim Request As Integer
             Request = MsgBox("Sicher dass sie die Druckseite neu erstellen wollen?" & vbCrLf & "Es sollten keine Daten verloren gehen, da alle Daten automatisch eingesammelt werden! Manuell auf der Druckseite vorgenommene Modifikationen werden jedoch überschrieben!", vbExclamation + vbOKCancel, "Sicher?")
@@ -212,9 +213,7 @@ Private Sub WriteSection(secRow As Integer, pupilRow As Integer, pupilIdx As Int
     clSectUNext = ColLetter(Range(CfgFirstSect).Column + sectIdx * 2 + 1)
     clExCntU = ColLetter(Range(CfgExerCount).Column + sectIdx * 2 + 1)
     exCnt = m_wsCfg.Range(CfgExerCount).Offset(0, sectIdx * 2).Value
-    vlookupBase = ",'" & m_wsCfg.Range(CfgFirstSect).Offset(0, sectIdx * 2).Value & "'!$" & m_clCfgStart1 & "$" & _
-                  CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & ColLetter(CfgColStart + CfgColOffsetFirstEx + exCnt) & _
-                  "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils) & ","
+    vlookupBase = ",'" & m_wsCfg.Range(CfgFirstSect).Offset(0, sectIdx * 2).Value & "'!PupilBlock,"
 
     m_wsPrint.Cells(secRow, 1).Font.Bold = True
     m_wsPrint.Cells(secRow, 1).Value = m_wsCfg.Range(CfgFirstSect).Offset(0, sectIdx * 2).Value
@@ -284,9 +283,7 @@ Private Sub WriteGesamt(secRow As Integer, pupilRow As Integer, sheetCnt As Inte
         arrMaxFml(1, p + 1) = "=" & CfgRef(ColLetter(Range(CfgExerCount).Column + p * 2 + 1), m_exerCntRow)
         exCntP = m_wsCfg.Range(CfgExerCount).Offset(0, p * 2).Value
         m_wsPrint.Cells(secRow + 2, 2 + p).Formula = "=VLOOKUP(" & m_clPrintName & CStr(pupilRow) & ",'" & _
-            m_wsCfg.Range(CfgFirstSect).Offset(0, p * 2).Value & "'!$" & m_clCfgStart1 & "$" & _
-            CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":" & ColLetter(CfgColStart + CfgColOffsetFirstEx + exCntP) & "$" & _
-            CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils) & "," & exCntP + 2 & ",0)"
+            m_wsCfg.Range(CfgFirstSect).Offset(0, p * 2).Value & "'!PupilBlock," & exCntP + 2 & ",0)"
     Next p
     With m_wsPrint
         .Range(.Cells(secRow, 2), .Cells(secRow, 1 + sheetCnt)).Value = arrAbbrev
@@ -326,5 +323,7 @@ Private Function SectAbbrev(sectName As String) As String
         SectAbbrev = left(sectName, 4)
     End If
 End Function
+
+
 
 

@@ -51,7 +51,7 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
     Dim graph As Chart
     Set graph = graphO.Chart
     
-    graphO.name = CfgNameChart
+    graphO.Name = CfgNameChart
     
     With graph
         '--------------------------------
