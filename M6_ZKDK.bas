@@ -763,7 +763,6 @@ Private Sub ImportZKDKFromFile(targetLabel As String)
     Dim ws As Worksheet
     Dim srcWs As Worksheet
     Dim lastRow As Long
-    Dim r As Long
     Dim lbl As String
     Dim c As Integer
     Dim importCount As Long
@@ -779,25 +778,55 @@ Private Sub ImportZKDKFromFile(targetLabel As String)
             Set srcWs = srcWb.Worksheets(actSheetName)
             numOfSubEx = GetNumOfSubEx(actSheetName)
             ws.Unprotect Password:=WbPw
-            lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
-            For r = CfgRowStart + CfgRowOffsetFirstPupil To lastRow
-                lbl = ws.Cells(r, CfgColStart + 1).Value
+
+            Dim firstRow As Long
+            firstRow = CfgRowStart + CfgRowOffsetFirstPupil
+            lastRow = firstRow + gNumOfPupils * 3
+            Dim blockRows As Long
+            blockRows = lastRow - firstRow + 1
+
+            ' Bulk-read label column, source block and destination block into arrays.
+            ' All per-cell interaction happens in memory; only one write per sheet.
+            Dim dstLabels As Variant
+            dstLabels = ws.Range( _
+                ws.Cells(firstRow, CfgColStart + 1), _
+                ws.Cells(lastRow, CfgColStart + 1)).Value
+
+            Dim srcBlock As Variant
+            srcBlock = srcWs.Range( _
+                srcWs.Cells(firstRow, CfgColStart + CfgColOffsetFirstEx), _
+                srcWs.Cells(lastRow, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Value
+
+            Dim dstBlock As Variant
+            dstBlock = ws.Range( _
+                ws.Cells(firstRow, CfgColStart + CfgColOffsetFirstEx), _
+                ws.Cells(lastRow, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Value
+
+            Dim rowIdx As Long
+            For rowIdx = 1 To blockRows
+                lbl = CStr(dstLabels(rowIdx, 1))
                 If lbl = targetLabel Then
-                    For c = 0 To numOfSubEx - 1
+                    For c = 1 To numOfSubEx
                         Dim srcVal As Variant
-                        srcVal = srcWs.Cells(r, CfgColStart + CfgColOffsetFirstEx + c).Value
+                        srcVal = srcBlock(rowIdx, c)
                         If IsEmpty(srcVal) Or srcVal = "" Then
-                            ' empty source cell ? leave destination untouched
+                            ' empty source cell — leave destination untouched
                             skipCount = skipCount + 1
                         ElseIf IsNumeric(srcVal) Then
-                            ws.Cells(r, CfgColStart + CfgColOffsetFirstEx + c).Value = CDbl(srcVal)
+                            dstBlock(rowIdx, c) = CDbl(srcVal)
                             importCount = importCount + 1
                         Else
                             skipCount = skipCount + 1
                         End If
                     Next c
                 End If
-            Next r
+            Next rowIdx
+
+            ' Write the entire exercise block back in a single range assignment
+            ws.Range( _
+                ws.Cells(firstRow, CfgColStart + CfgColOffsetFirstEx), _
+                ws.Cells(lastRow, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Value = dstBlock
+
             If DevMode <> 1 Then
                 ws.Protect Password:=WbPw
                 ws.EnableSelection = xlUnlockedCells
