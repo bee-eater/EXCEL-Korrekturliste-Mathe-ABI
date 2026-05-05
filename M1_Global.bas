@@ -4,7 +4,7 @@ Option Explicit
 '-----------------------------------------------------
 ' KONSTANTEN
 '-----------------------------------------------------
-Public Const DevMode = 1
+Public Const DevMode = 0
 Public Const WbPw = ""
 Public Const Version = "v2.2.0-beta3"
 

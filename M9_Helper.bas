@@ -1,5 +1,4 @@
 Attribute VB_Name = "M9_Helper"
-
 Option Explicit
 
 Function WSExists(n As String) As Boolean
@@ -390,10 +389,5 @@ UpdateCheckError:
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
     
 End Function
-
-
-
-
-
 
 

@@ -1,5 +1,4 @@
 Attribute VB_Name = "M6_ZKDK"
-
 Option Explicit
 
 ' Cache for BuildCrossedMatrix — keyed by sheet name so NavigateAfterEntry
@@ -359,6 +358,18 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
             firstPupilRow = CfgRowStart + CfgRowOffsetFirstPupil
             Dim lastMainRow As Long
             lastMainRow = 0
+
+            ' Pre-build crossed matrix once per sheet so the unlock pass below
+            ' knows which cells must stay locked (crossed-out SelEx columns).
+            Dim sheetIsSelEx As Boolean
+            sheetIsSelEx = IsSelEx(actSheetName)
+            Dim visCrossedMatrix() As Boolean
+            If sheetIsSelEx Then visCrossedMatrix = BuildCrossedMatrix(ws, numOfSubEx)
+
+            ' Track main pupil row count (= 0-based pupil index) separately.
+            Dim mainRowIdx As Integer
+            mainRowIdx = 0
+
             For r = firstPupilRow To lastRow
                 lbl = ws.Cells(r, CfgColStart + 1).Value
                 If lbl = "ZK" Then
@@ -386,8 +397,21 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
                         rngPts.Locked = True
                     Else
                         rngPts.Font.ColorIndex = xlAutomatic
-                        rngPts.Locked = False
+                        If sheetIsSelEx Then
+                            ' Unlock only non-crossed cells; keep crossed cells locked
+                            ' so Tab / EnableSelection=xlUnlockedCells skips them.
+                            ' visCrossedMatrix(p,c): True = available, False = crossed.
+                            Dim vc As Integer
+                            For vc = 0 To numOfSubEx - 1
+                                ' True = available ? Locked = False; False = crossed ? Locked = True
+                                ws.Cells(r, CfgColStart + CfgColOffsetFirstEx + vc).Locked = _
+                                    Not visCrossedMatrix(mainRowIdx, vc)
+                            Next vc
+                        Else
+                            rngPts.Locked = False
+                        End If
                     End If
+                    mainRowIdx = mainRowIdx + 1
                 End If
             Next r
             ' Restore xlMedium on the outer bottom edge of the last main pupil row
@@ -828,6 +852,9 @@ Public Sub UpdateZKDKMismatchHighlight(Optional targetWs As Worksheet = Nothing)
     Application.ScreenUpdating = False
     Application.EnableEvents = False   ' prevent re-entrant SheetChange while writing colors
 
+    Dim errNum As Long
+    Dim errDesc As String
+    errNum = 0
     On Error GoTo Cleanup
 
     Dim stride As Integer
@@ -846,6 +873,8 @@ Public Sub UpdateZKDKMismatchHighlight(Optional targetWs As Worksheet = Nothing)
     End If
 
 Cleanup:
+    errNum = Err.Number
+    errDesc = Err.Description
     Application.EnableEvents = True
     ' Restore original sheet/cell before re-enabling screen updates
     ' so NavigateAfterEntry (called after us) can take over without a visible flash
@@ -854,6 +883,10 @@ Cleanup:
     savedCell.Select
     On Error GoTo 0
     Application.ScreenUpdating = True
+    If errNum <> 0 Then
+        MsgBox "Fehler in UpdateZKDKMismatchHighlight:" & vbNewLine & _
+               "(" & errNum & ") " & errDesc, vbCritical, "Fehler"
+    End If
 
 End Sub
 
@@ -899,7 +932,7 @@ Private Sub ProcessMismatchSheet(ws As Worksheet, stride As Integer)
                 subBlockRow = mainBlockRow + offset
                 Dim subLbl As String
                 subLbl = CStr(dataBlock(subBlockRow, 1))
-                If (subLbl = "ZK" Or subLbl = "DK") And Not crossedMatrix(p, c) Then
+                If (subLbl = "ZK" Or subLbl = "DK") And crossedMatrix(p, c) Then
                     Dim subVal As Variant
                     subVal = dataBlock(subBlockRow, blockCol)
                     Dim newClr As Long
@@ -999,7 +1032,7 @@ Public Sub NavigateAfterEntry(ws As Worksheet, changedCell As Range)
     ' Try to find the next non-crossed column to the right in the same row
     Dim c As Integer
     For c = (changedCol - firstCol + 1) To numOfSubEx - 1
-        If Not crossedMatrix(pupilIdx, c) Then
+        If crossedMatrix(pupilIdx, c) Then
             nextRow = changedCell.row
             nextCol = firstCol + c
             Exit For
@@ -1066,7 +1099,7 @@ Private Function FirstAvailColForPupil(crossedMatrix() As Boolean, pupilIdx As I
                                        numOfSubEx As Integer, firstCol As Long) As Long
     Dim c As Integer
     For c = 0 To numOfSubEx - 1
-        If Not crossedMatrix(pupilIdx, c) Then
+        If crossedMatrix(pupilIdx, c) Then
             FirstAvailColForPupil = firstCol + c
             Exit Function
         End If
@@ -1093,6 +1126,15 @@ Private Function BuildCrossedMatrix(ws As Worksheet, numOfSubEx As Integer) As B
     Dim matrix() As Boolean
     ReDim matrix(0 To gNumOfPupils - 1, 0 To numOfSubEx - 1)
 
+    ' Default all columns to available (True); only SelEx "x" entries override to False.
+    ' This ensures non-SelEx exercise columns within a SelEx sheet are never locked.
+    Dim initP As Integer, initC As Integer
+    For initP = 0 To gNumOfPupils - 1
+        For initC = 0 To numOfSubEx - 1
+            matrix(initP, initC) = True
+        Next initC
+    Next initP
+
     If WSExists(WbNameSelExConfig) Then
         Dim wsCfg As Worksheet
         Set wsCfg = Worksheets(WbNameSelExConfig)
@@ -1109,7 +1151,7 @@ Private Function BuildCrossedMatrix(ws As Worksheet, numOfSubEx As Integer) As B
         Dim cfgBlock As Variant
         cfgBlock = wsCfg.Range( _
             wsCfg.Cells(cfgFirstDataRow, cfgFirstDataCol), _
-            wsCfg.Cells(cfgFirstDataRow + 1 + gNumOfPupils - 1, _
+            wsCfg.Cells(cfgFirstDataRow + 1 + gNumOfPupils, _
                         cfgFirstDataCol + maxCols - 1)).Value
 
         ' Bulk-read the ws task-header row to match SelEx task names to ws columns
@@ -1131,8 +1173,10 @@ Private Function BuildCrossedMatrix(ws As Worksheet, numOfSubEx As Integer) As B
                         Dim sp As Integer
                         For sp = 1 To gNumOfPupils
                             ' rows 3..2+gNumOfPupils in cfgBlock = pupil data
+                            ' "x" = pupil chose this task ? available (True already set)
+                            ' anything else = not chosen ? crossed (False)
                             If CStr(cfgBlock(2 + sp, ci)) <> "x" Then
-                                matrix(sp - 1, su - 1) = True
+                                matrix(sp - 1, su - 1) = False
                             End If
                         Next sp
                         Exit For
@@ -1147,6 +1191,5 @@ Private Function BuildCrossedMatrix(ws As Worksheet, numOfSubEx As Integer) As B
     m_crossedMatrix = matrix
     BuildCrossedMatrix = matrix
 End Function
-
 
 

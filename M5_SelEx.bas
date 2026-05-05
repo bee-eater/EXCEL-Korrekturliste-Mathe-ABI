@@ -1,5 +1,4 @@
 Attribute VB_Name = "M5_SelEx"
-
 Option Explicit
 
 Public Function PaintSelXCfgPage()
@@ -160,6 +159,11 @@ Public Function PaintSelXCfgPage()
     ws.Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).Value = "In nebenstehender Tabelle, alle gewählten Aufgaben des Schülers mit ""x"" selektieren. Anschließend den 'Wahlaufgaben aktualisieren' Button auf der Config-Seite anklicken!"
 
     ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select
+
+    If DevMode <> 1 Then
+        ws.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
+        ws.EnableSelection = xlUnlockedCells
+    End If
     
 End Function
 
@@ -182,6 +186,7 @@ Public Function FillSelXCfgPage()
     ' Set name for further processing
     actSheetName = WbNameSelExConfig
     Set ws = Worksheets(actSheetName)
+    ws.Unprotect Password:=WbPw
 
     ' Find all column widths based on selection if this section contains choosable exercises
     Dim tblIdx As Integer
@@ -248,6 +253,11 @@ Public Function FillSelXCfgPage()
             
         End If
     Next tblIdx
+
+    If DevMode <> 1 Then
+        ws.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
+        ws.EnableSelection = xlUnlockedCells
+    End If
     
 End Function
 
@@ -394,7 +404,8 @@ Public Sub ApplySelExCrosses()
             End If
         Next pLine
         If DevMode <> 1 Then
-            wsSht.Protect DrawingObjects:=True, Contents:=True, Scenarios:=False
+            wsSht.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
+            wsSht.EnableSelection = xlUnlockedCells
         End If
 
 NextSelExCol:
@@ -414,7 +425,7 @@ Public Function CrossOutCell(cell As Range, Optional skipProtect As Boolean = Fa
     w = cell.Width
     h = cell.Height
     
-    If Not skipProtect Then ws.Unprotect
+    If Not skipProtect Then ws.Unprotect Password:=WbPw
     
     ' Set bg - alternate based on pupil row index (stride-aware)
     Dim pupilIdx As Long
@@ -459,20 +470,26 @@ Public Function CrossOutCell(cell As Range, Optional skipProtect As Boolean = Fa
 
     ' Protect drawing objects only (leaves cell editing untouched)
     cell.Locked = True
-    If Not skipProtect Then ws.Protect DrawingObjects:=True, Contents:=True, Scenarios:=False
+    If Not skipProtect Then
+        ws.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
+        ws.EnableSelection = xlUnlockedCells
+    End If
 
 End Function
 
 Public Sub RemoveCross(cell As Range, Optional skipProtect As Boolean = False)
     Dim ws As Worksheet
     Set ws = cell.Worksheet
-    If Not skipProtect Then ws.Unprotect
+    If Not skipProtect Then ws.Unprotect Password:=WbPw
     cell.Locked = False
     On Error Resume Next
     cell.Interior.color = gClrBg1
     ws.Shapes("Cross_" & cell.Address(False, False)).Delete
     On Error GoTo 0
-    If Not skipProtect Then ws.Protect DrawingObjects:=True, Contents:=False, Scenarios:=False
+    If Not skipProtect Then
+        ws.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
+        ws.EnableSelection = xlUnlockedCells
+    End If
 End Sub
 
 Public Function IsSelEx(Section As String)
@@ -500,9 +517,10 @@ Public Function PupilHasSelEx(PupilIndex As Integer, Section As String, Number A
         Exit Function
     Else
 
-        ' Reihe des Schülers (stride-aware: accounts for ZK/DK rows)
+        ' ConfigW always has exactly one row per pupil (no ZK/DK rows),
+        ' so use a direct 0-based offset — NOT PhysicalPupilRow which applies stride.
         Dim pupilRow As Long
-        pupilRow = PhysicalPupilRow(PupilIndex)
+        pupilRow = CfgRowStart + CfgRowOffsetFirstPupil + PupilIndex
 
         Dim wsSelEx As Worksheet
         Set wsSelEx = Worksheets(WbNameSelExConfig)
@@ -534,10 +552,5 @@ Public Function PupilHasSelEx(PupilIndex As Integer, Section As String, Number A
     PupilHasSelEx = False
 
 End Function
-
-
-
-
-
 
 
