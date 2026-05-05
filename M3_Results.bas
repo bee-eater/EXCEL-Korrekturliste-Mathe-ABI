@@ -294,7 +294,7 @@ Private Sub WriteGesamt(secRow As Integer, pupilRow As Integer, sheetCnt As Inte
         .Cells(secRow, 2 + sheetCnt).Font.Bold = True
         .Cells(secRow + 1, 2 + sheetCnt).Formula = "=SUM(B" & CStr(secRow + 1) & ":" & ColLetter(sheetCnt + 1) & CStr(secRow + 1) & ")"
         .Cells(secRow + 1, 2 + sheetCnt).Font.Bold = True
-        .Cells(secRow + 2, 2 + sheetCnt).Value = "=SUM(B" & CStr(secRow + 2) & ":" & ColLetter(sheetCnt + 1) & CStr(secRow + 2) & ")"
+        .Cells(secRow + 2, 2 + sheetCnt).Formula = "=SUM(B" & CStr(secRow + 2) & ":" & ColLetter(sheetCnt + 1) & CStr(secRow + 2) & ")"
         .Cells(secRow + 2, 2 + sheetCnt).Font.Bold = True
     End With
 

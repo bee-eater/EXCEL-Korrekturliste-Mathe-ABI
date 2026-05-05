@@ -121,9 +121,14 @@ Public Sub AddZKDKRows(ws As Worksheet, numOfSubEx As Integer, span As Integer)
         extraRows = gNumOfPupils * 2  ' now stride = 3, total extra = 2 per pupil
     End If
 
-    ' Re-apply outer border around the full block (pupil + ZK/DK rows)
+SkipInsert:
+    ' Always re-apply outer border around the full block (pupil + ZK/DK rows).
+    ' Runs even when GoTo SkipInsert was taken (e.g. DK-only insertion) so the
+    ' border is never left incomplete.
+    Dim stride As Integer
+    stride = PupilStride()
     Dim totalExtraRows As Integer
-    totalExtraRows = gNumOfPupils * (IIf(hasDK, 2, 1))
+    totalExtraRows = gNumOfPupils * (stride - 1)
     Dim rngBlock As Range
     Set rngBlock = ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), _
                             ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils + totalExtraRows - 1, CfgColStart + span))
@@ -152,10 +157,7 @@ Public Sub AddZKDKRows(ws As Worksheet, numOfSubEx As Integer, span As Integer)
         .Borders(xlEdgeLeft).ColorIndex = 1
     End With
 
-SkipInsert:
     ' Always define/redefine sheet-scoped PupilBlock named range
-    Dim stride As Integer
-    stride = PupilStride()
     Call DefinePupilBlockName(ws, numOfSubEx, gNumOfPupils * stride)
 
 End Sub
@@ -601,6 +603,8 @@ Public Sub AddAllZKDKRows()
         End If
     Next actSheet
 
+    Worksheets(WbNameConfig).Activate
+
     ' Re-apply SelEx crosses to all newly added ZK/DK rows
     If CheckForSelEx() Then Call ApplySelExCrosses
 
@@ -650,6 +654,8 @@ Public Sub RemoveAllZKDKRows()
             End If
         End If
     Next actSheet
+
+    Worksheets(WbNameConfig).Activate
 
     Application.DisplayAlerts = True
     Application.EnableEvents = True

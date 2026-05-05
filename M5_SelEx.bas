@@ -382,7 +382,6 @@ Public Sub ApplySelExCrosses()
             End If
         Next u
         If Not found Then
-            i = i + 1
             GoTo NextSelExCol
         End If
 

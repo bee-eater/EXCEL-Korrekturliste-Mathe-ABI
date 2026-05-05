@@ -54,20 +54,10 @@ Private Sub Workbook_SheetActivate(ByVal Sh As Object)
     ' Lock/Unlock all Worksheets
     '----------------------------------------
     If Sh.Name = WbNameConfig Then
-        Dim ws As Worksheet
         If DevMode = 1 And ThisWorkbook.Worksheets(WbNameConfig).ProtectContents Then
-            For Each ws In ThisWorkbook.Worksheets
-                ws.Unprotect Password:=WbPw
-            Next ws
+            Call UnlockSheets
         ElseIf DevMode <> 1 And Not ThisWorkbook.Worksheets(WbNameConfig).ProtectContents Then
-            If Application.CutCopyMode = False Then
-                For Each ws In ThisWorkbook.Worksheets
-                    If ws.Name <> WbNamePrintSheet Then
-                        ws.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
-                        ws.EnableSelection = xlUnlockedCells
-                    End If
-                Next ws
-            End If
+            Call LockSheets
         End If
     End If
     '----------------------------------------

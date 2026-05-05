@@ -710,57 +710,28 @@ Public Function UpdateUpDownColors()
 
 End Function
 
-Public Function LockSheets()
-
-    If DevMode <> 1 Then
-        Dim i As Integer
-        Dim sheetName As String
-        For i = 0 To CfgMaxSheets
-            sheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value
-            If WSExists(sheetName) Then
-                Worksheets(sheetName).Protect Password:=WbPw
-                Worksheets(sheetName).EnableSelection = xlUnlockedCells
+' Protects all sheets except the print sheet.
+' Skipped silently when something is on the clipboard (CutCopyMode) to avoid
+' clearing the user's copy/cut selection.
+Public Sub LockSheets()
+    If DevMode <> 1 And Application.CutCopyMode = False Then
+        Dim ws As Worksheet
+        For Each ws In ThisWorkbook.Worksheets
+            If ws.Name <> WbNamePrintSheet Then
+                ws.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
+                ws.EnableSelection = xlUnlockedCells
             End If
-        Next i
-
-        If WSExists(WbNameGradeSheet) Then
-            Worksheets(WbNameGradeSheet).Protect Password:=WbPw
-            Worksheets(WbNameGradeSheet).EnableSelection = xlUnlockedCells
-        End If
-
-        Worksheets(WbNameConfig).Protect Password:=WbPw
-        Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
-        Worksheets(WbNameGradeKey).Protect Password:=WbPw
-        Worksheets(WbNameGradeKey).EnableSelection = xlUnlockedCells
+        Next ws
     End If
+End Sub
 
-End Function
-
-Public Function UnlockSheets()
-
-    If DevMode <> 1 Then
-        Dim i As Integer
-        Dim sheetName As String
-        For i = 0 To CfgMaxSheets
-            sheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value
-            If WSExists(sheetName) Then
-                Worksheets(sheetName).Unprotect Password:=WbPw
-                Worksheets(sheetName).EnableSelection = xlUnlockedCells
-            End If
-        Next i
-
-        If WSExists(WbNameGradeSheet) Then
-            Worksheets(WbNameGradeSheet).Unprotect Password:=WbPw
-            Worksheets(WbNameGradeSheet).EnableSelection = xlUnlockedCells
-        End If
-
-        Worksheets(WbNameConfig).Unprotect Password:=WbPw
-        Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
-        Worksheets(WbNameGradeKey).Unprotect Password:=WbPw
-        Worksheets(WbNameGradeKey).EnableSelection = xlUnlockedCells
-    End If
-
-End Function
+' Unprotects all sheets.
+Public Sub UnlockSheets()
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Worksheets
+        ws.Unprotect Password:=WbPw
+    Next ws
+End Sub
 
 Public Function CheckForSelEx()
 
