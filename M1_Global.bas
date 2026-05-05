@@ -6,7 +6,7 @@ Option Explicit
 '-----------------------------------------------------
 Public Const DevMode = 0
 Public Const WbPw = ""
-Public Const Version = "v2.2.0-beta"
+Public Const Version = "v2.2.0-beta1"
 
 Public Const WbNameConfig = "Config"
 Public Const WbNameSelExConfig = "ConfigW"
@@ -69,6 +69,10 @@ Public gClrMinus1 As Long
 Public gClrPlus1 As Long
 Public gClrPlus2 As Long
 
+' ZK/DK diff
+Public gClrZKDKDiffGt As Long
+Public gClrZKDKDiffLt As Long
+
 'Vars
 Public gNumOfPupils As Integer
 Public gSheetCnt As Integer
@@ -100,12 +104,15 @@ Public Function Init()
     gClrPlus1 = RGB(255, 151, 151)
     gClrPlus2 = RGB(255, 0, 0)
     
+    gClrZKDKDiffGt = RGB(230, 255, 230)
+    gClrZKDKDiffLt = RGB(255, 220, 220)
+    
     gNumOfPupils = Worksheets(WbNameConfig).Range(CfgNumOfPupi).Value
 
     Dim i As Integer
     gSheetCnt = 0
     For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value) Then
             gSheetCnt = gSheetCnt + 1
         End If
     Next i

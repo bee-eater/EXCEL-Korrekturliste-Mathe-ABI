@@ -341,11 +341,11 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
     Dim lbl As String
 
     For actSheet = 0 To CfgMaxSheets
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
         If actSheetName = "" Then Exit For
         If WSExists(actSheetName) Then
             Set ws = Worksheets(actSheetName)
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, actSheet * 2).Value
+            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
             ws.Unprotect Password:=WbPw
             lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
             Dim firstPupilRow As Long
@@ -422,7 +422,7 @@ Public Sub AddAllZKDKRows()
     Dim chkSheet As Integer
     Dim chkName As String
     For chkSheet = 0 To CfgMaxSheets
-        chkName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, chkSheet * 2).Value
+        chkName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, chkSheet * 2).Value
         If chkName = "" Then Exit For
         If WSExists(chkName) Then
             Dim chkWs As Worksheet
@@ -462,13 +462,13 @@ Public Sub AddAllZKDKRows()
             Dim dkSheet As Integer
             Dim dkName As String
             For dkSheet = 0 To CfgMaxSheets
-                dkName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, dkSheet * 2).Value
+                dkName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, dkSheet * 2).Value
                 If dkName = "" Then Exit For
                 If WSExists(dkName) Then
                     Dim dkWs As Worksheet
                     Set dkWs = Worksheets(dkName)
                     Dim dkNumEx As Integer
-                    dkNumEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, dkSheet * 2).Value
+                    dkNumEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, dkSheet * 2).Value
                     dkWs.Unprotect Password:=WbPw
                     ' Delete DK rows bottom-up; re-format ZK rows to remove softBottom
                     Dim dkSpan As Integer
@@ -526,11 +526,11 @@ Public Sub AddAllZKDKRows()
     Dim ws As Worksheet
 
     For actSheet = 0 To CfgMaxSheets
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
         If actSheetName = "" Then Exit For
         If WSExists(actSheetName) Then
             Set ws = Worksheets(actSheetName)
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, actSheet * 2).Value
+            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
             span = numOfSubEx + 2
             ws.Unprotect Password:=WbPw
             Call AddZKDKRows(ws, numOfSubEx, span)
@@ -577,11 +577,11 @@ Public Sub RemoveAllZKDKRows()
     Dim ws As Worksheet
 
     For actSheet = 0 To CfgMaxSheets
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
         If actSheetName = "" Then Exit For
         If WSExists(actSheetName) Then
             Set ws = Worksheets(actSheetName)
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, actSheet * 2).Value
+            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
             ws.Unprotect Password:=WbPw
             Call RemoveZKDKRows(ws, numOfSubEx)
             ws.Activate
@@ -672,12 +672,12 @@ Private Sub ImportZKDKFromFile(targetLabel As String)
     skipCount = 0
 
     For actSheet = 0 To CfgMaxSheets
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
         If actSheetName = "" Then Exit For
         If WSExists(actSheetName) Then
             Set ws = Worksheets(actSheetName)
             Set srcWs = srcWb.Worksheets(actSheetName)
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, actSheet * 2).Value
+            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
             ws.Unprotect Password:=WbPw
             lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
             For r = CfgRowStart + CfgRowOffsetFirstPupil To lastRow
@@ -708,7 +708,10 @@ Private Sub ImportZKDKFromFile(targetLabel As String)
     Application.Calculation = xlCalculationAutomatic
     If Not alreadyOpen Then srcWb.Close SaveChanges:=False
 
-    ' 5. Summary
+    ' 5. Refresh mismatch highlighting after import
+    If importCount > 0 Then Call UpdateZKDKMismatchHighlight
+
+    ' 6. Summary
     Dim summary As String
     summary = targetLabel & "-Werte erfolgreich importiert." & vbNewLine & importCount & " Zelle(n) übernommen."
     If skipCount > 0 Then
@@ -729,7 +732,7 @@ Private Function ValidateImportSource(srcWb As Workbook, targetLabel As String) 
     Dim actSheetName As String
 
     For actSheet = 0 To CfgMaxSheets
-        actSheetName = ThisWorkbook.Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = ThisWorkbook.Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
         If actSheetName = "" Then Exit For
         If Not WSExists(actSheetName) Then GoTo NextValidateSheet
 
@@ -797,6 +800,131 @@ NextValidateSheet:
 ValidateDone:
     ValidateImportSource = errors
 End Function
+
+'-----------------------------------------------------
+' ZK / DK MISMATCH HIGHLIGHTING
+'-----------------------------------------------------
+
+' Highlights ZK/DK point cells that contain a value differing from the main pupil row.
+' Light-red (gClrPlus1) = mismatch; white = matches or empty.
+' Safe to call standalone (e.g. from a button) or after import.
+Public Sub UpdateZKDKMismatchHighlight()
+
+    Call Init
+
+    Dim actSheet As Integer
+    Dim actSheetName As String
+    Dim numOfSubEx As Integer
+    Dim ws As Worksheet
+
+    Application.ScreenUpdating = False
+
+    For actSheet = 0 To CfgMaxSheets
+        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
+        If actSheetName = "" Then Exit For
+        If Not WSExists(actSheetName) Then GoTo NextMismatchSheet
+        Set ws = Worksheets(actSheetName)
+        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
+        ws.Unprotect Password:=WbPw
+
+        Dim stride As Integer
+        stride = PupilStride()
+        If stride = 1 Then GoTo ProtectAndNext   ' no ZK/DK rows at all
+
+        ' Build a crossed matrix from the SelEx config sheet (cheap: one scan per sheet).
+        ' crossedMatrix(p, c) = True means that sub-exercise column c is crossed for pupil p.
+        Dim crossedMatrix() As Boolean
+        ReDim crossedMatrix(0 To gNumOfPupils - 1, 0 To numOfSubEx - 1)
+        If WSExists(WbNameSelExConfig) Then
+            Dim wsCfg As Worksheet
+            Set wsCfg = Worksheets(WbNameSelExConfig)
+            Dim si As Integer
+            si = 0
+            Do While True
+                Dim cfgSht As String
+                cfgSht = wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + si).Value
+                If cfgSht = "" Then Exit Do
+                If cfgSht = ws.Name Then
+                    ' Find which sub-exercise column on this sheet the SelEx task maps to
+                    Dim cfgTsk As String
+                    cfgTsk = wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + si).Value
+                    Dim su As Integer
+                    For su = 0 To numOfSubEx - 1
+                        If ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + su).Value = cfgTsk Then
+                            ' Populate per-pupil crossed flag for this column
+                            Dim sp As Integer
+                            For sp = 0 To gNumOfPupils - 1
+                                If wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstPupil + sp, CfgColStart + CfgColOffsetFirstEx + si).Value <> "x" Then
+                                    crossedMatrix(sp, su) = True
+                                End If
+                            Next sp
+                            Exit For
+                        End If
+                    Next su
+                End If
+                si = si + 1
+            Loop
+        End If
+
+        Dim p As Integer
+        For p = 0 To gNumOfPupils - 1
+            Dim mainRow As Long
+            mainRow = PhysicalPupilRow(p)
+            Dim c As Integer
+            For c = 0 To numOfSubEx - 1
+                Dim col As Long
+                col = CfgColStart + CfgColOffsetFirstEx + c
+                Dim mainVal As Variant
+                mainVal = ws.Cells(mainRow, col).Value
+
+                ' Check each sub-row in the stride block and act only on actual ZK/DK rows
+                Dim offset As Integer
+                For offset = 1 To stride - 1
+                    Dim subRow As Long
+                    subRow = mainRow + offset
+                    Dim subLbl As String
+                    subLbl = ws.Cells(subRow, CfgColStart + 1).Value
+                    If subLbl = "ZK" Or subLbl = "DK" Then
+                        Dim subCell As Range
+                        Set subCell = ws.Cells(subRow, col)
+                        ' Skip cells that are crossed out by SelEx
+                        If crossedMatrix(p, c) Then GoTo NextOffset
+                        Dim subVal As Variant
+                        subVal = subCell.Value
+                        If IsNumeric(subVal) And subVal <> "" Then
+                            If IsNumeric(mainVal) And mainVal <> "" Then
+                                If CDbl(subVal) > CDbl(mainVal) Then
+                                    subCell.Interior.color = gClrZKDKDiffGt
+                                ElseIf CDbl(subVal) < CDbl(mainVal) Then
+                                    subCell.Interior.color = gClrZKDKDiffLt
+                                Else
+                                    subCell.Interior.color = RGB(255, 255, 255)
+                                End If
+                            Else
+                                ' main is empty but ZK/DK has a value
+                                subCell.Interior.color = RGB(255, 255, 255)
+                            End If
+                        Else
+                            subCell.Interior.color = RGB(255, 255, 255)
+                        End If
+                    End If
+NextOffset:
+                Next offset
+            Next c
+        Next p
+
+ProtectAndNext:
+        If DevMode <> 1 Then
+            ws.Protect Password:=WbPw
+            ws.EnableSelection = xlUnlockedCells
+        End If
+NextMismatchSheet:
+    Next actSheet
+
+    Application.ScreenUpdating = True
+
+End Sub
+
 
 
 

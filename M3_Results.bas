@@ -40,7 +40,7 @@ Public Function CreateResults()
             Dim i As Integer, sheetCnt As Integer
             sheetCnt = 0
             For i = 0 To CfgMaxSheets
-                If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+                If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value) Then
                     sheetCnt = (sheetCnt + 1)
                 End If
             Next i
@@ -212,20 +212,20 @@ Private Sub WriteSection(secRow As Integer, pupilRow As Integer, pupilIdx As Int
     clSectU = ColLetter(Range(CfgFirstSect).Column + sectIdx * 2)
     clSectUNext = ColLetter(Range(CfgFirstSect).Column + sectIdx * 2 + 1)
     clExCntU = ColLetter(Range(CfgExerCount).Column + sectIdx * 2 + 1)
-    exCnt = m_wsCfg.Range(CfgExerCount).Offset(0, sectIdx * 2).Value
-    vlookupBase = ",'" & m_wsCfg.Range(CfgFirstSect).Offset(0, sectIdx * 2).Value & "'!PupilBlock,"
+    exCnt = m_wsCfg.Range(CfgExerCount).offset(0, sectIdx * 2).Value
+    vlookupBase = ",'" & m_wsCfg.Range(CfgFirstSect).offset(0, sectIdx * 2).Value & "'!PupilBlock,"
 
     m_wsPrint.Cells(secRow, 1).Font.Bold = True
-    m_wsPrint.Cells(secRow, 1).Value = m_wsCfg.Range(CfgFirstSect).Offset(0, sectIdx * 2).Value
+    m_wsPrint.Cells(secRow, 1).Value = m_wsCfg.Range(CfgFirstSect).offset(0, sectIdx * 2).Value
     m_wsPrint.Cells(secRow + 1, 1).Value = "max BE"
     m_wsPrint.Cells(secRow + 2, 1).Value = "erreichte BE"
 
-    If StrComp(m_wsCfg.Range(CfgSelEx).Offset(0, sectIdx * 2).MergeArea.Cells(1, 1).Text, "Ja") = 0 Then
+    If StrComp(m_wsCfg.Range(CfgSelEx).offset(0, sectIdx * 2).MergeArea.Cells(1, 1).Text, "Ja") = 0 Then
         ' Wahlaufgaben: only write selected exercises (sparse)
         idx = 0
         For p = 0 To exCnt - 1
-            sec = CStr(m_wsCfg.Range(CfgFirstSect).Offset(0, sectIdx * 2).Value)
-            tsk = CStr(m_wsCfg.Range(CfgFirstSect).Offset(p + 2, sectIdx * 2).Value)
+            sec = CStr(m_wsCfg.Range(CfgFirstSect).offset(0, sectIdx * 2).Value)
+            tsk = CStr(m_wsCfg.Range(CfgFirstSect).offset(p + 2, sectIdx * 2).Value)
             If PupilHasSelEx(CInt(pupilIdx), sec, tsk) Then
                 m_wsPrint.Cells(secRow, 2 + idx).Formula = "=" & CfgRef(clSectU, 2 + m_firstSectRow + p)
                 m_wsPrint.Cells(secRow + 1, 2 + idx).Formula = "=" & CfgRef(clSectUNext, 2 + m_firstSectRow + p)
@@ -279,11 +279,11 @@ Private Sub WriteGesamt(secRow As Integer, pupilRow As Integer, sheetCnt As Inte
     ReDim arrAbbrev(1 To 1, 1 To sheetCnt)
     ReDim arrMaxFml(1 To 1, 1 To sheetCnt)
     For p = 0 To sheetCnt - 1
-        arrAbbrev(1, p + 1) = SectAbbrev(m_wsCfg.Range(CfgFirstSect).Offset(0, p * 2).Text)
+        arrAbbrev(1, p + 1) = SectAbbrev(m_wsCfg.Range(CfgFirstSect).offset(0, p * 2).Text)
         arrMaxFml(1, p + 1) = "=" & CfgRef(ColLetter(Range(CfgExerCount).Column + p * 2 + 1), m_exerCntRow)
-        exCntP = m_wsCfg.Range(CfgExerCount).Offset(0, p * 2).Value
+        exCntP = m_wsCfg.Range(CfgExerCount).offset(0, p * 2).Value
         m_wsPrint.Cells(secRow + 2, 2 + p).Formula = "=VLOOKUP(" & m_clPrintName & CStr(pupilRow) & ",'" & _
-            m_wsCfg.Range(CfgFirstSect).Offset(0, p * 2).Value & "'!PupilBlock," & exCntP + 2 & ",0)"
+            m_wsCfg.Range(CfgFirstSect).offset(0, p * 2).Value & "'!PupilBlock," & exCntP + 2 & ",0)"
     Next p
     With m_wsPrint
         .Range(.Cells(secRow, 2), .Cells(secRow, 1 + sheetCnt)).Value = arrAbbrev

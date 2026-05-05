@@ -9,15 +9,15 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
     Dim sheetCnt As Integer
     sheetCnt = 0
     For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value) Then
             sheetCnt = sheetCnt + 1
         End If
     Next i
     For i = 0 To CfgMaxExercisesPerSection
-        ThisWorkbook.Worksheets(ws).Cells(row, col).Offset(0, i).Value = i
-        ThisWorkbook.Worksheets(ws).Cells(row, col).Offset(1, i).Formula = "=COUNTIF('" & WbNameGradeSheet & "'!$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils) & "," & Split(Cells(1, col + i).Address, "$")(1) & CStr(row) & ")"
+        ThisWorkbook.Worksheets(ws).Cells(row, col).offset(0, i).Value = i
+        ThisWorkbook.Worksheets(ws).Cells(row, col).offset(1, i).Formula = "=COUNTIF('" & WbNameGradeSheet & "'!$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils) & "," & Split(Cells(1, col + i).Address, "$")(1) & CStr(row) & ")"
     Next i
-    ThisWorkbook.Worksheets(ws).Cells(row, col).Offset(1, 16).Formula = "=MAX($" & Split(Cells(1, col).Address, "$")(1) & "$" & CStr(row + 1) & ":$" & Split(Cells(1, col + CfgMaxExercisesPerSection).Address, "$")(1) & "$" & CStr(row + 1) & ")"
+    ThisWorkbook.Worksheets(ws).Cells(row, col).offset(1, 16).Formula = "=MAX($" & Split(Cells(1, col).Address, "$")(1) & "$" & CStr(row + 1) & ":$" & Split(Cells(1, col + CfgMaxExercisesPerSection).Address, "$")(1) & "$" & CStr(row + 1) & ")"
     Application.CalculateFull
     
     '------------------------------------
@@ -66,7 +66,7 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
         '--------------------------------
         ' Format axis
         '--------------------------------
-        .Axes(xlValue).MaximumScale = CInt(ThisWorkbook.Worksheets(ws).Cells(row, col).Offset(1, 16).Value) + 1
+        .Axes(xlValue).MaximumScale = CInt(ThisWorkbook.Worksheets(ws).Cells(row, col).offset(1, 16).Value) + 1
         .Axes(xlValue).MajorUnit = 1
         .Axes(xlValue).MinorUnit = 1
         .Axes(xlValue).Format.Line.Visible = msoFalse

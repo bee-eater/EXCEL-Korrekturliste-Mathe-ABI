@@ -56,11 +56,11 @@ Public Function PaintSelXCfgPage()
     
     For tblIdx = 0 To CfgMaxSheets
         ' If this section consists of choosable exercises, add them to the new config page
-        SelCfg = Worksheets(WbNameConfig).Range(CfgSelEx).Offset(0, tblIdx * 2).MergeArea.Cells(1, 1).Text
+        SelCfg = Worksheets(WbNameConfig).Range(CfgSelEx).offset(0, tblIdx * 2).MergeArea.Cells(1, 1).Text
         If StrComp(SelCfg, "Ja") = 0 Then
             
             ' Set column widths for sub exercises
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, tblIdx * 2).Value
+            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, tblIdx * 2).Value
             If numOfSubEx > 0 Then
                 ws.Range(ws.Columns(CfgColStart + CfgColOffsetFirstEx + colOffset), _
                          ws.Columns(CfgColStart + CfgColOffsetFirstEx + colOffset + numOfSubEx - 1)).ColumnWidth = 4
@@ -191,8 +191,8 @@ Public Function FillSelXCfgPage()
     ' Pre-pass: compute total colOffset so span is correct before writing headers
     totalColOffset = 0
     For preIdx = 0 To CfgMaxSheets
-        If StrComp(Worksheets(WbNameConfig).Range(CfgSelEx).Offset(0, preIdx * 2).MergeArea.Cells(1, 1).Text, "Ja") = 0 Then
-            totalColOffset = totalColOffset + Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, preIdx * 2).Value
+        If StrComp(Worksheets(WbNameConfig).Range(CfgSelEx).offset(0, preIdx * 2).MergeArea.Cells(1, 1).Text, "Ja") = 0 Then
+            totalColOffset = totalColOffset + Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, preIdx * 2).Value
         End If
     Next preIdx
     span = totalColOffset + 1
@@ -215,7 +215,7 @@ Public Function FillSelXCfgPage()
     ReDim arrIdx(1 To gNumOfPupils, 1 To 1)
     ReDim arrNames(1 To gNumOfPupils, 1 To 1)
     For i = 0 To gNumOfPupils - 1
-        arrIdx(i + 1, 1) = Worksheets(WbNameConfig).Range(CfgFirstPupi).Offset(i, 0).Value
+        arrIdx(i + 1, 1) = Worksheets(WbNameConfig).Range(CfgFirstPupi).offset(i, 0).Value
         arrNames(i + 1, 1) = "='" & WbNameConfig & "'!" & colPupiFirst & CStr(cfgPupiFirstRow + i) & "&"", ""&'" & WbNameConfig & "'!" & colPupiLast & CStr(cfgPupiFirstRow + i)
     Next i
     ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), _
@@ -225,17 +225,17 @@ Public Function FillSelXCfgPage()
         
     For tblIdx = 0 To CfgMaxSheets
         ' If this section consists of choosable exercises, add them to the new config page
-        SelCfg = Worksheets(WbNameConfig).Range(CfgSelEx).Offset(0, tblIdx * 2).MergeArea.Cells(1, 1).Text
+        SelCfg = Worksheets(WbNameConfig).Range(CfgSelEx).offset(0, tblIdx * 2).MergeArea.Cells(1, 1).Text
         If StrComp(SelCfg, "Ja") = 0 Then
             
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, tblIdx * 2).Value
+            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, tblIdx * 2).Value
             ReDim arrExFml(1 To 1, 1 To numOfSubEx)
             ReDim arrExVal(1 To 1, 1 To numOfSubEx)
             For i = 0 To numOfSubEx - 1
                 arrExFml(1, i + 1) = "='" & WbNameConfig & "'!" & ColLetter(Range(CfgFirstSect).Column + tblIdx * 2) & CStr(2 + Range(CfgFirstSect).row + i)
                 ' WS Name anstatt Punktezahl, um die Referenz zu behalten
                 'arrExFml(1, i + 1) = "='" & WbNameConfig & "'!" & ColLetter(Range(CfgFirstSect).Column + (tblIdx * 2) + 1) & CStr(2 + Range(CfgFirstSect).row + i)
-                arrExVal(1, i + 1) = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, tblIdx * 2).Text
+                arrExVal(1, i + 1) = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, tblIdx * 2).Text
             Next i
             ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + colOffset + CfgColOffsetFirstEx), _
                      ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + colOffset + CfgColOffsetFirstEx + numOfSubEx - 1)).Formula = arrExFml
@@ -478,8 +478,8 @@ End Sub
 Public Function IsSelEx(Section As String)
     Dim i As Integer
     For i = 0 To CfgMaxSheets
-        If Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Text = Section Then
-            If StrComp(Worksheets(WbNameConfig).Range(CfgSelEx).Offset(0, i * 2).MergeArea.Cells(1, 1).Text, "Ja") = 0 Then
+        If Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Text = Section Then
+            If StrComp(Worksheets(WbNameConfig).Range(CfgSelEx).offset(0, i * 2).MergeArea.Cells(1, 1).Text, "Ja") = 0 Then
                 IsSelEx = True
                 Exit Function
             Else

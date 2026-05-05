@@ -36,7 +36,7 @@ Public Function CreateTables()
             End If
             ' Get back to config page
             Worksheets(WbNameConfig).Activate
-            Worksheets(WbNameConfig).Range(CfgFirstPupi).Offset(0, 1).Select
+            Worksheets(WbNameConfig).Range(CfgFirstPupi).offset(0, 1).Select
         End If
         
         Call LockSheets
@@ -63,7 +63,7 @@ Private Function makeSure() As Boolean
     Dim found As Boolean
     For Each ws In ThisWorkbook.Worksheets
         For i = 0 To CfgMaxSheets
-            If StrComp(ws.Name, Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Text) = 0 Then
+            If StrComp(ws.Name, Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Text) = 0 Then
                 found = True
             End If
         Next i
@@ -103,7 +103,7 @@ Private Function PaintSegmentPages()
     For actSheet = 0 To CfgMaxSheets
 
         ' Set name for further processing
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
         If actSheetName = "" Then
             Exit Function
         End If
@@ -138,7 +138,7 @@ Private Function PaintSegmentPages()
         ws.Columns(CfgColStart + 1).ColumnWidth = 25 ' Spalte C: Schüler-Name
 
         Dim numOfSubEx As Integer
-        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, actSheet * 2).Value
+        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
         If numOfSubEx > 0 Then
             ' Batch: all sub-exercise columns + sum column in one range assignment
             ws.Range(ws.Columns(CfgColStart + CfgColOffsetFirstEx), _
@@ -304,12 +304,12 @@ Private Function FillSegmentPages()
     For actSheet = 0 To CfgMaxSheets
 
         ' Set name for further processing
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, actSheet * 2).Value
+        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
         If actSheetName = "" Then
             Exit Function
         End If
         Set ws = Worksheets(actSheetName)
-        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, actSheet * 2).Value
+        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
         span = numOfSubEx + 2 ' Anzahl der Teilaufgaben + 3 Spalten (Index,Name,Summe)
 
         colSectEx = ColLetter(Range(CfgFirstSect).Column + actSheet * 2)
@@ -345,7 +345,7 @@ Private Function FillSegmentPages()
                  ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Formula = arrHdr2
 
         ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Value = "Summe"
-        ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "='" & WbNameConfig & "'!" & ColLetter(Range(CfgExerCount).Offset(0, (actSheet * 2) + 1).Column) & CStr(Range(CfgExerCount).row)
+        ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "='" & WbNameConfig & "'!" & ColLetter(Range(CfgExerCount).offset(0, (actSheet * 2) + 1).Column) & CStr(Range(CfgExerCount).row)
 
         '------------------------------------
         ' Namen
@@ -353,7 +353,7 @@ Private Function FillSegmentPages()
         For i = 0 To gNumOfPupils - 1
             Dim physRow As Long
             physRow = CfgRowStart + CfgRowOffsetFirstPupil + i * PupilStride()
-            ws.Cells(physRow, CfgColStart).Value = Worksheets(WbNameConfig).Range(CfgFirstPupi).Offset(i, 0).Value
+            ws.Cells(physRow, CfgColStart).Value = Worksheets(WbNameConfig).Range(CfgFirstPupi).offset(i, 0).Value
             ws.Cells(physRow, CfgColStart + 1).Formula = "='" & WbNameConfig & "'!" & colPupiFirst & CStr(cfgPupiFirstRow + i) & "&"", ""&'" & WbNameConfig & "'!" & colPupiLast & CStr(cfgPupiFirstRow + i)
         Next i
 
@@ -382,7 +382,7 @@ Private Function PaintGradePage()
         Worksheets(WbNameGradeSheet).Delete
     End If
     ' Create new sheet and cache reference
-    Worksheets.Add(Before:=Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, 0).Value)).Name = WbNameGradeSheet
+    Worksheets.Add(Before:=Worksheets(Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, 0).Value)).Name = WbNameGradeSheet
     Dim ws As Worksheet
     Set ws = Worksheets(WbNameGradeSheet)
     ws.Tab.color = gClrTabGrades
@@ -553,8 +553,8 @@ Private Function FillGradePage()
     ReDim arrHdrVal(1 To 1, 1 To sheetCnt)
     ReDim arrHdrFml(1 To 1, 1 To sheetCnt)
     For i = 0 To sheetCnt - 1
-        arrHdrVal(1, i + 1) = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value
-        arrHdrFml(1, i + 1) = "='" & WbNameConfig & "'!" & ColLetter(Range(CfgExerCount).Offset(0, (i * 2) + 1).Column) & CStr(Range(CfgExerCount).row)
+        arrHdrVal(1, i + 1) = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value
+        arrHdrFml(1, i + 1) = "='" & WbNameConfig & "'!" & ColLetter(Range(CfgExerCount).offset(0, (i * 2) + 1).Column) & CStr(Range(CfgExerCount).row)
     Next i
     ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), _
              ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + sheetCnt - 1)).Value = arrHdrVal
@@ -575,7 +575,7 @@ Private Function FillGradePage()
     ReDim arrIdx(1 To gNumOfPupils, 1 To 1)
     ReDim arrNames(1 To gNumOfPupils, 1 To 1)
     For i = 0 To gNumOfPupils - 1
-        arrIdx(i + 1, 1) = Worksheets(WbNameConfig).Range(CfgFirstPupi).Offset(i, 0).Value
+        arrIdx(i + 1, 1) = Worksheets(WbNameConfig).Range(CfgFirstPupi).offset(i, 0).Value
         arrNames(i + 1, 1) = "='" & WbNameConfig & "'!" & colName & CStr(cfgPupiFirstRow + i) & "&"", ""&'" & WbNameConfig & "'!" & colNameLast & CStr(cfgPupiFirstRow + i)
     Next i
     ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), _
@@ -716,7 +716,7 @@ Public Function LockSheets()
         Dim i As Integer
         Dim sheetName As String
         For i = 0 To CfgMaxSheets
-            sheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value
+            sheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value
             If WSExists(sheetName) Then
                 Worksheets(sheetName).Protect Password:=WbPw
                 Worksheets(sheetName).EnableSelection = xlUnlockedCells
@@ -742,7 +742,7 @@ Public Function UnlockSheets()
         Dim i As Integer
         Dim sheetName As String
         For i = 0 To CfgMaxSheets
-            sheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value
+            sheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value
             If WSExists(sheetName) Then
                 Worksheets(sheetName).Unprotect Password:=WbPw
                 Worksheets(sheetName).EnableSelection = xlUnlockedCells
@@ -770,7 +770,7 @@ Public Function CheckForSelEx()
     
     found = False
     For tblIdx = 0 To CfgMaxSheets
-        SelCfg = Worksheets(WbNameConfig).Range(CfgSelEx).Offset(0, tblIdx * 2).MergeArea.Cells(1, 1).Text
+        SelCfg = Worksheets(WbNameConfig).Range(CfgSelEx).offset(0, tblIdx * 2).MergeArea.Cells(1, 1).Text
         If StrComp(SelCfg, "Ja") = 0 Then
             found = True
             Exit For
@@ -792,9 +792,9 @@ Private Sub FillGradePage_WriteSectionColumns(ByVal ws As Worksheet, ByVal sheet
 
     For u = 0 To sheetCnt - 1
         ' Anzahl der Teilaufgaben steht in Config =SVERWEIS(C5;'Infini B'!$C$7:$R$29;16;0)
-        If Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, u * 2).Value <> "" Then
-            sectName = Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, u * 2).Value
-            numSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).Offset(0, u * 2).Value
+        If Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, u * 2).Value <> "" Then
+            sectName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, u * 2).Value
+            numSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, u * 2).Value
 
             ReDim arrVlookup(1 To gNumOfPupils, 1 To 1)
             For i = 0 To gNumOfPupils - 1
@@ -810,7 +810,7 @@ Private Function CountSegmentSheets() As Integer
     Dim cnt As Integer, i As Integer
     cnt = 0
     For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).Offset(0, i * 2).Value) Then
+        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value) Then
             cnt = cnt + 1
         End If
     Next i
