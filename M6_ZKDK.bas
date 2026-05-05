@@ -77,6 +77,16 @@ Public Sub AddZKDKRows(ws As Worksheet, numOfSubEx As Integer, span As Integer)
             End If
             ws.Rows(pupilRow + 1).Insert Shift:=xlDown
             Call FormatZKDKRow(ws, pupilRow + 1, numOfSubEx, span, "ZK", rowClr, hasDK)
+            ' Soften the main pupil row's bottom border so it does not produce a thick
+            ' divider between the pupil row and the ZK row directly beneath it.
+            Dim softClrA As Long
+            softClrA = IIf(rowClr = gClrTheme2, gClrTheme2a, gClrTheme2)
+            With ws.Range(ws.Cells(pupilRow, CfgColStart), ws.Cells(pupilRow, CfgColStart + span)) _
+                     .Borders(xlEdgeBottom)
+                .LineStyle = xlContinuous
+                .Weight = xlHairline
+                .color = softClrA
+            End With
         Next i
         extraRows = gNumOfPupils * (1 + IIf(hasDK, 1, 0))
 
@@ -356,8 +366,6 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
             lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
             Dim firstPupilRow As Long
             firstPupilRow = CfgRowStart + CfgRowOffsetFirstPupil
-            Dim lastMainRow As Long
-            lastMainRow = 0
 
             ' Pre-build crossed matrix once per sheet so the unlock pass below
             ' knows which cells must stay locked (crossed-out SelEx columns).
@@ -377,7 +385,6 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
                 ElseIf lbl = "DK" Then
                     ws.Rows(r).Hidden = hideDK
                 ElseIf lbl <> "" Then
-                    lastMainRow = r
                     ' Main pupil row: ensure own top border is always present (visible when ZK/DK above are hidden)
                     ' First pupil row keeps xlMedium (it is the block's outer top edge); inner rows use xlThin
                     Dim rngMainRow As Range
@@ -414,17 +421,36 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
                     mainRowIdx = mainRowIdx + 1
                 End If
             Next r
-            ' Restore xlMedium on the outer bottom edge of the last main pupil row
-            ' (may have been thinned by ZK/DK row hairline borders or row deletion)
-            If lastMainRow > 0 Then
-                Dim rngLastRow As Range
-                Set rngLastRow = ws.Range(ws.Cells(lastMainRow, CfgColStart), ws.Cells(lastMainRow, CfgColStart + numOfSubEx + 2))
-                With rngLastRow.Borders(xlEdgeBottom)
+            ' Always reapply the medium border on the percentage row so that row/column
+            ' hiding can never leave the bottom of the pupil block without a thick edge.
+            Dim stride As Integer
+            stride = PupilStride()
+            Dim pctRow As Long
+            pctRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * stride
+            Dim span As Integer
+            span = numOfSubEx + 2
+            With ws.Range(ws.Cells(pctRow, CfgColStart), ws.Cells(pctRow, CfgColStart + span))
+                With .Borders(xlEdgeTop)
                     .LineStyle = xlContinuous
                     .Weight = xlMedium
                     .ColorIndex = 1
                 End With
-            End If
+                With .Borders(xlEdgeBottom)
+                    .LineStyle = xlContinuous
+                    .Weight = xlMedium
+                    .ColorIndex = 1
+                End With
+                With .Borders(xlEdgeLeft)
+                    .LineStyle = xlContinuous
+                    .Weight = xlMedium
+                    .ColorIndex = 1
+                End With
+                With .Borders(xlEdgeRight)
+                    .LineStyle = xlContinuous
+                    .Weight = xlMedium
+                    .ColorIndex = 1
+                End With
+            End With
             If DevMode <> 1 Then
                 ws.Protect Password:=WbPw
                 ws.EnableSelection = xlUnlockedCells
@@ -1191,5 +1217,4 @@ Private Function BuildCrossedMatrix(ws As Worksheet, numOfSubEx As Integer) As B
     m_crossedMatrix = matrix
     BuildCrossedMatrix = matrix
 End Function
-
 

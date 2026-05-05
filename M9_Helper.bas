@@ -1,6 +1,26 @@
 Attribute VB_Name = "M9_Helper"
 Option Explicit
 
+' Sourcecode exportieren für Versionsverwaltung
+Public Function ExportSourceFiles()
+    Dim destPath As String
+    destPath = Application.ActiveWorkbook.Path & "\"
+    Dim component As VBComponent
+    For Each component In Application.VBE.ActiveVBProject.VBComponents
+        If (component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule) And component.Name <> "JsonConverter" Then
+            component.Export destPath & component.Name & ToFileExtension(component.Type)
+        ElseIf component.Type = vbext_ct_Document Then
+            ' Export ThisWorkbook and the Config sheet code module
+            If component.Name = "DieseArbeitsmappe" Then
+                component.Export destPath & component.Name & ".bas"
+            ElseIf component.Name = WbNameConfig Or component.Name = WbNameGradeKey Then
+                component.Export destPath & "Sht_" & component.Name & ".bas"
+            End If
+        End If
+    Next
+
+End Function
+
 Function WSExists(n As String) As Boolean
   Dim ws As Worksheet
   WSExists = False
@@ -22,26 +42,6 @@ Public Function GetNumOfSubEx(sheetName As String) As Integer
         End If
     Next i
     GetNumOfSubEx = 0
-End Function
-
-' Sourcecode exportieren für Versionsverwaltung
-Public Function ExportSourceFiles()
-    Dim destPath As String
-    destPath = Application.ActiveWorkbook.Path & "\"
-    Dim component As VBComponent
-    For Each component In Application.VBE.ActiveVBProject.VBComponents
-        If (component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule) And component.Name <> "JsonConverter" Then
-            component.Export destPath & component.Name & ToFileExtension(component.Type)
-        ElseIf component.Type = vbext_ct_Document Then
-            ' Export ThisWorkbook and the Config sheet code module
-            If component.Name = "DieseArbeitsmappe" Then
-                component.Export destPath & component.Name & ".bas"
-            ElseIf component.Name = WbNameConfig Or component.Name = WbNameGradeKey Then
-                component.Export destPath & "Sht_" & component.Name & ".bas"
-            End If
-        End If
-    Next
-
 End Function
 
 Public Function IsVBProjectAccessible() As Boolean

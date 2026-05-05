@@ -45,7 +45,7 @@ Private Sub Workbook_SheetActivate(ByVal Sh As Object)
         row = gNumOfPupils * (4 * (gSheetCnt + 1) + 2) + 2
         ' Aktuell fest Spalte 1! Und anschlieﬂend der Wert gesetzt
         Worksheets(WbNamePrintSheet).ChartObjects(CfgNameChart).Chart.Axes(xlValue).MaximumScale = CInt(ThisWorkbook.Worksheets(WbNamePrintSheet).Cells(row, 1).offset(1, 16).Value) + 1
-        If DevMode <> 1 Then
+        If DevMode <> 1 And Application.CutCopyMode = False Then
             Worksheets(WbNamePrintSheet).Protect Password:=WbPw
         End If
     End If
@@ -60,12 +60,14 @@ Private Sub Workbook_SheetActivate(ByVal Sh As Object)
                 ws.Unprotect Password:=WbPw
             Next ws
         ElseIf DevMode <> 1 And Not ThisWorkbook.Worksheets(WbNameConfig).ProtectContents Then
-            For Each ws In ThisWorkbook.Worksheets
-                If ws.Name <> WbNamePrintSheet Then
-                    ws.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
-                    ws.EnableSelection = xlUnlockedCells
-                End If
-            Next ws
+            If Application.CutCopyMode = False Then
+                For Each ws In ThisWorkbook.Worksheets
+                    If ws.Name <> WbNamePrintSheet Then
+                        ws.Protect Password:=WbPw, DrawingObjects:=True, Contents:=True, Scenarios:=False
+                        ws.EnableSelection = xlUnlockedCells
+                    End If
+                Next ws
+            End If
         End If
     End If
     '----------------------------------------
