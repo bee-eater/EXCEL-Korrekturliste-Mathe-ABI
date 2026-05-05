@@ -22,20 +22,18 @@ Es kann sein, dass Windows/EXCEL trotz erlaubter Makros diese blockiert. Das lie
 
 <img width="378" height="494" alt="image" src="https://github.com/user-attachments/assets/83d05eef-9f2a-4a92-9100-d5849e328f2c" />
 
-## 💖 Help Me Keep This Project Going
+## 💖 Hilf mir, dieses Projekt am Laufen zu halten
 
-Maintaining and improving this project takes time, energy, and resources. If you like the idea and want to see the project progressing, create issues for required changes to let me know! Ideally as soon as possible. :-)
+Die Pflege und Weiterentwicklung dieses Projekts kostet Zeit, Energie und Ressourcen. Wenn dir die Idee gefällt und du möchtest, dass das Projekt weiter vorankommt, erstelle gerne Issues mit gewünschten Änderungen – am besten möglichst zeitnah. :-)
 
-## 🙌 Ways You Can Help
+## 🙌 So kannst du helfen
 
-- **Contribute** – If there are open issues and you know your way around EXCEL and VBA feel free to contribute!
-- **Share the project** – Spread the word!
-- **Open issues** – Found a bug or have a feature suggestion? Open an issue and let me know!
-- **Support financially** – If you’d like to support this work directly, consider:
+- **Mitwirken** – Wenn es offene Issues gibt und du dich mit EXCEL und VBA auskennst, leg gerne selbst los und erstelle Pull Requests!
+- **Projekt teilen** – Erzähl anderen davon und verteile die Liste damit möglichst viele davon profitieren!
+- **Issues erstellen** – Du hast einen Bug gefunden oder eine Feature-Idee? Erstelle ein Issue und gib mir Bescheid!
+- **Finanziell unterstützen** – Wenn du diese Arbeit direkt unterstützen möchtest, kannst du:
 
-  - ❤️ [Sponsor me on GitHub](https://github.com/sponsors/bee-eater)
-  - 🧡 [Donate via PayPal](https://www.paypal.com/donate/?hosted_button_id=MUS7QJU8YB9CY)
+  - ❤️ [Mich auf GitHub sponsoren](https://github.com/sponsors/bee-eater)
+  - 🧡 [Per PayPal spenden](https://www.paypal.com/donate/?hosted_button_id=MUS7QJU8YB9CY)
 
-Don't feel obligated to pay anything! I'm a fan and a user of the open source community! Shout me a coffee if you like and the list helped you or saved you some hours!
-
-
+Du musst natürlich nichts bezahlen! Ich bin selbst Fan und Nutzer der Open-Source-Community. Wenn dir das Projekt geholfen und ein paar Stunden Arbeit gespart hat, freue ich mich über einen Kaffee. ☕
