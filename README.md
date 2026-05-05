@@ -9,6 +9,12 @@ Excel-Tabelle als Korrekturhilfe des bayerischen Mathe-Abis.
 - Export der Ergebnisse als druckfertiges PDF
 - Notenschlüssel auf eigenem Tab hinterlegt
 
+## Makros werden nicht aktiviert
+
+Es kann sein, dass Windows/EXCEL trotz erlaubter Makros diese blockiert. Das liegt daran, dass Microsoft erkennt, dass die Datei aus dem Internet heruntergeladen wurde. Um die Datei als vertrauenswürdig zu markieren, muss im Eigenschaftsfenster (Rechtsklick -> Eigenschaften) im unteren Bereich einmal ein Häkchen bei "Zulassen" gesetzt werden. Danach sollte alles gehen!
+
+<img width="378" height="494" alt="image" src="https://github.com/user-attachments/assets/83d05eef-9f2a-4a92-9100-d5849e328f2c" />
+
 ## 💖 Help Me Keep This Project Going
 
 Maintaining and improving this project takes time, energy, and resources. If you like the idea and want to see the project progressing, create issues for required changes to let me know! Ideally as soon as possible. :-)
@@ -24,3 +30,5 @@ Maintaining and improving this project takes time, energy, and resources. If you
   - 🧡 [Donate via PayPal](https://www.paypal.com/donate/?hosted_button_id=MUS7QJU8YB9CY)
 
 Don't feel obligated to pay anything! I'm a fan and a user of the open source community! Shout me a coffee if you like and the list helped you or saved you some hours!
+
+
