@@ -1,5 +1,4 @@
 Attribute VB_Name = "M3_Results"
-
 Option Explicit
 
 ' -- Module-level context for PaintPrintPage helpers (initialised once per run) --
@@ -8,11 +7,12 @@ Private m_wsCfg         As Worksheet
 Private m_clAbiTitle    As String, m_clAbiDate    As String
 Private m_clAbiTeacher  As String, m_clAbiClass   As String
 Private m_clPupiFirst   As String, m_clPupiLast   As String
-Private m_clCfgStart1   As String, m_clPrintName  As String
+Private m_clPrintName   As String
 Private m_rowAbiTitle   As Long, m_rowAbiDate     As Long
 Private m_rowAbiTeacher As Long, m_rowAbiClass    As Long
 Private m_pupiFirstRow  As Long, m_firstSectRow As Long
 Private m_exerCntRow    As Long
+Private m_sectionMatrices() As Variant
 
 Public Function CreateResults()
 
@@ -60,7 +60,11 @@ Public Function CreateResults()
             With wsPrint.PageSetup
                 .Orientation = xlLandscape
                 .FitToPagesWide = 1
-                .PrintArea = "A1:Q" & CStr(5 + (sheetCnt * 4) + (gNumOfPupils - 1) * blockSizeMain + 29) '29 Zellen für das Chart
+                Dim lastPrintCol As Long
+                lastPrintCol = 2 + CfgMaxExercisesPerSection
+                Dim lastPrintRow As Long
+                lastPrintRow = wsPrint.ChartObjects(CfgNameChart).BottomRightCell.row
+                .PrintArea = wsPrint.Range(wsPrint.Cells(1, 1), wsPrint.Cells(lastPrintRow, lastPrintCol)).Address
                 .LeftMargin = Application.CentimetersToPoints(1)
                 .RightMargin = Application.CentimetersToPoints(1)
                 .TopMargin = Application.CentimetersToPoints(1)
@@ -142,7 +146,6 @@ Private Function PaintPrintPage(sheetCnt As Integer)
     m_clAbiClass = ColLetter(Range(CfgAbiClass).Column)
     m_clPupiFirst = ColLetter(Range(CfgFirstPupi).Column + 1)
     m_clPupiLast = ColLetter(Range(CfgFirstPupi).Column + 2)
-    m_clCfgStart1 = ColLetter(CfgColStart + 1)
     m_clPrintName = ColLetter(CfgPrintNameCol)
     m_rowAbiTitle = Range(CfgAbiTitle).row
     m_rowAbiDate = Range(CfgAbiDate).row
@@ -151,6 +154,21 @@ Private Function PaintPrintPage(sheetCnt As Integer)
     m_pupiFirstRow = Range(CfgFirstPupi).row
     m_firstSectRow = Range(CfgFirstSect).row
     m_exerCntRow = Range(CfgExerCount).row
+
+    '------------------------------------
+    ' Pre-build SelEx availability matrices (one bulk read per section, done once)
+    '------------------------------------
+    ReDim m_sectionMatrices(0 To sheetCnt - 1)
+    Dim msU As Integer
+    For msU = 0 To sheetCnt - 1
+        If StrComp(m_wsCfg.Range(CfgSelEx).offset(0, msU * 2).MergeArea.Cells(1, 1).Text, "Ja") = 0 Then
+            Dim msWs As Worksheet
+            Set msWs = Worksheets(m_wsCfg.Range(CfgFirstSect).offset(0, msU * 2).Value)
+            Dim msExCnt As Integer
+            msExCnt = m_wsCfg.Range(CfgExerCount).offset(0, msU * 2).Value
+            m_sectionMatrices(msU) = BuildCrossedMatrix(msWs, msExCnt)
+        End If
+    Next msU
 
     '------------------------------------
     ' Write per-pupil blocks
@@ -179,8 +197,7 @@ End Function
 Private Sub WriteHeader(pupilRow As Integer, pupilIdx As Integer, sheetCnt As Integer)
 
     With m_wsPrint.Range(m_wsPrint.Cells(pupilRow, 1), m_wsPrint.Cells(pupilRow, 17))
-        .Select
-        Call setBorder(False, True, True, True, True, xlThin, 0, True)
+        Call setBorder(.Cells, False, True, True, True, True, xlThin, 0, True)
         .Font.Size = 12
         .Font.Bold = True
     End With
@@ -192,8 +209,7 @@ Private Sub WriteHeader(pupilRow As Integer, pupilIdx As Integer, sheetCnt As In
     ' Kurs
     With m_wsPrint.Cells(pupilRow, 17)
         .Formula = "=" & CfgRef(m_clAbiTeacher, m_rowAbiTeacher) & "&"", Kurs ""&" & CfgRef(m_clAbiClass, m_rowAbiClass)
-        .Select
-        Call setBorder(False, False, True, True, True, xlThin, 0, True, xlRight)
+        Call setBorder(.Cells, False, False, True, True, True, xlThin, 0, True, xlRight)
     End With
     ' Notenbereich formatieren
     m_wsPrint.Range(m_wsPrint.Cells(pupilRow + 1, 2), m_wsPrint.Cells(pupilRow + 4 * (sheetCnt + 1), 17)).HorizontalAlignment = xlCenter
@@ -204,7 +220,6 @@ End Sub
 Private Sub WriteSection(secRow As Integer, pupilRow As Integer, pupilIdx As Integer, sectIdx As Integer)
 
     Dim p As Integer, idx As Integer
-    Dim sec As String, tsk As String
     Dim clSectU As String, clSectUNext As String, clExCntU As String
     Dim exCnt As Integer, vlookupBase As String
     Dim arrTaskFml() As Variant, arrMaxFml() As Variant, arrVlookup() As Variant
@@ -222,11 +237,12 @@ Private Sub WriteSection(secRow As Integer, pupilRow As Integer, pupilIdx As Int
 
     If StrComp(m_wsCfg.Range(CfgSelEx).offset(0, sectIdx * 2).MergeArea.Cells(1, 1).Text, "Ja") = 0 Then
         ' Wahlaufgaben: only write selected exercises (sparse)
+
+        Dim crossedMatrix() As Boolean
+        crossedMatrix = m_sectionMatrices(sectIdx)
         idx = 0
         For p = 0 To exCnt - 1
-            sec = CStr(m_wsCfg.Range(CfgFirstSect).offset(0, sectIdx * 2).Value)
-            tsk = CStr(m_wsCfg.Range(CfgFirstSect).offset(p + 2, sectIdx * 2).Value)
-            If PupilHasSelEx(CInt(pupilIdx), sec, tsk) Then
+            If crossedMatrix(pupilIdx, p) Then
                 m_wsPrint.Cells(secRow, 2 + idx).Formula = "=" & CfgRef(clSectU, 2 + m_firstSectRow + p)
                 m_wsPrint.Cells(secRow + 1, 2 + idx).Formula = "=" & CfgRef(clSectUNext, 2 + m_firstSectRow + p)
                 m_wsPrint.Cells(secRow + 2, 2 + idx).Formula = "=VLOOKUP(" & m_clPrintName & CStr(pupilRow) & vlookupBase & p + 2 & ",0)"
@@ -259,7 +275,11 @@ Private Sub WriteSection(secRow As Integer, pupilRow As Integer, pupilIdx As Int
         .Cells(secRow, 2 + idx).Font.Bold = True
         .Cells(secRow + 1, 2 + idx).Formula = "=" & CfgRef(clExCntU, m_exerCntRow)
         .Cells(secRow + 1, 2 + idx).Font.Bold = True
-        .Cells(secRow + 2, 2 + idx).Formula = "=SUM(B" & CStr(secRow + 2) & ":" & ColLetter(idx + 1) & CStr(secRow + 2) & ")"
+        If idx > 0 Then
+            .Cells(secRow + 2, 2 + idx).Formula = "=SUM(B" & CStr(secRow + 2) & ":" & ColLetter(idx + 1) & CStr(secRow + 2) & ")"
+        Else
+            .Cells(secRow + 2, 2 + idx).Value = 0
+        End If
         .Cells(secRow + 2, 2 + idx).Font.Bold = True
     End With
 
@@ -299,10 +319,7 @@ Private Sub WriteGesamt(secRow As Integer, pupilRow As Integer, sheetCnt As Inte
     End With
 
     ' Notenpunkte
-    With m_wsPrint.Range(m_wsPrint.Cells(secRow + 1, 16), m_wsPrint.Cells(secRow + 2, 17))
-        .Select
-        Call setBorder(False, True, True, True, True, xlThin, RGB(255, 255, 255), True, xlHAlignCenterAcrossSelection, xlBottom)
-    End With
+    Call setBorder(m_wsPrint.Range(m_wsPrint.Cells(secRow + 1, 16), m_wsPrint.Cells(secRow + 2, 17)), False, True, True, True, True, xlThin, RGB(255, 255, 255), True, xlHAlignCenterAcrossSelection, xlBottom)
     m_wsPrint.Cells(secRow + 1, 16).Value = "NP"
     m_wsPrint.Cells(secRow + 1, 16).Font.Bold = True
     m_wsPrint.Cells(secRow + 2, 16).Formula = "=VLOOKUP(" & ColLetter(2 + sheetCnt) & CStr(secRow + 2) & "," & WbNameGradeKey & CfgVLookUpPoints & ")"
@@ -323,7 +340,4 @@ Private Function SectAbbrev(sectName As String) As String
         SectAbbrev = left(sectName, 4)
     End If
 End Function
-
-
-
 

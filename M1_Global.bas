@@ -6,7 +6,7 @@ Option Explicit
 '-----------------------------------------------------
 Public Const DevMode = 0
 Public Const WbPw = ""
-Public Const Version = "v2.2.0-beta3"
+Public Const Version = "v2.2.0-beta4"
 
 Public Const WbNameConfig = "Config"
 Public Const WbNameSelExConfig = "ConfigW"
@@ -121,4 +121,5 @@ Public Function Init()
     Next i
     
 End Function
+
 

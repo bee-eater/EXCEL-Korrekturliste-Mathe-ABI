@@ -95,107 +95,33 @@ Public Function floor(ByVal X As Double, Optional ByVal Factor As Double = 1) As
     floor = Int(X / Factor) * Factor
 End Function
 
-Public Function setBorder(merge As Boolean, left As Boolean, right As Boolean, top As Boolean, bottom As Boolean, style As Integer, color As Long, Optional edge As Boolean, Optional horAlign As Integer, Optional verAlign As Integer)
-    ' Farbe übernehmen
-    If color <> 0 Then
-        With Selection
-            .Interior.color = color
-        End With
-    End If
-    ' mergen?
-    If merge Then
-        With Selection
-            .MergeCells = True
-        End With
-    End If
-    ' Alignment übergeben?
-    If horAlign <> 0 Then
-        With Selection
-            .HorizontalAlignment = horAlign
-        End With
-    End If
-    ' Alignment übergeben?
-    If verAlign <> 0 Then
-        With Selection
-            .VerticalAlignment = verAlign
-        End With
-    End If
-    If edge Then
-        ' Left border?
-        If left Then
-            With Selection
-                .Borders(xlEdgeLeft).LineStyle = xlContinuous
-                .Borders(xlEdgeLeft).Weight = style
-                .Borders(xlEdgeLeft).ColorIndex = 1
-            End With
+' Applies fill, borders, merge and alignment directly to rng — no .Select required.
+Public Sub setBorder(rng As Range, merge As Boolean, left As Boolean, right As Boolean, top As Boolean, bottom As Boolean, style As Integer, fillColor As Long, Optional edge As Boolean, Optional horAlign As Integer, Optional verAlign As Integer)
+    With rng
+        If fillColor <> 0 Then .Interior.color = fillColor
+        If merge Then .MergeCells = True
+        If horAlign <> 0 Then .HorizontalAlignment = horAlign
+        If verAlign <> 0 Then .VerticalAlignment = verAlign
+        If edge Then
+            If left Then .Borders(xlEdgeLeft).LineStyle = xlContinuous: .Borders(xlEdgeLeft).Weight = style: .Borders(xlEdgeLeft).ColorIndex = 1
+            If right Then .Borders(xlEdgeRight).LineStyle = xlContinuous: .Borders(xlEdgeRight).Weight = style: .Borders(xlEdgeRight).ColorIndex = 1
+            If top Then .Borders(xlEdgeTop).LineStyle = xlContinuous: .Borders(xlEdgeTop).Weight = style: .Borders(xlEdgeTop).ColorIndex = 1
+            If bottom Then .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Weight = style: .Borders(xlEdgeBottom).ColorIndex = 1
+        Else
+            If left Then .Borders(xlEdgeLeft).LineStyle = xlContinuous: .Borders(xlEdgeLeft).Weight = style: .Borders(xlEdgeLeft).ColorIndex = 1
+            If right Then .Borders(xlEdgeRight).LineStyle = xlContinuous: .Borders(xlEdgeRight).Weight = style: .Borders(xlEdgeRight).ColorIndex = 1
+            If top Then .Borders(xlEdgeTop).LineStyle = xlContinuous: .Borders(xlEdgeTop).Weight = style: .Borders(xlEdgeTop).ColorIndex = 1
+            If bottom Then .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Weight = style: .Borders(xlEdgeBottom).ColorIndex = 1
         End If
-        ' Rigth border?
-        If right Then
-            With Selection
-                .Borders(xlEdgeRight).LineStyle = xlContinuous
-                .Borders(xlEdgeRight).Weight = style
-                .Borders(xlEdgeRight).ColorIndex = 1
-            End With
-        End If
-        ' Top border?
-        If top Then
-            With Selection
-                .Borders(xlEdgeTop).LineStyle = xlContinuous
-                .Borders(xlEdgeTop).Weight = style
-                .Borders(xlEdgeTop).ColorIndex = 1
-            End With
-        End If
-        ' Bottom border?
-        If bottom Then
-            With Selection
-                .Borders(xlEdgeBottom).LineStyle = xlContinuous
-                .Borders(xlEdgeBottom).Weight = style
-                .Borders(xlEdgeBottom).ColorIndex = 1
-            End With
-        End If
-    Else
-        ' Left border?
-        If left Then
-            With Selection
-                .Borders(xlLeft).LineStyle = xlContinuous
-                .Borders(xlLeft).Weight = style
-                .Borders(xlLeft).ColorIndex = 1
-            End With
-        End If
-        ' Rigth border?
-        If right Then
-            With Selection
-                .Borders(xlRight).LineStyle = xlContinuous
-                .Borders(xlRight).Weight = style
-                .Borders(xlRight).ColorIndex = 1
-            End With
-        End If
-        ' Top border?
-        If top Then
-            With Selection
-                .Borders(xlTop).LineStyle = xlContinuous
-                .Borders(xlTop).Weight = style
-                .Borders(xlTop).ColorIndex = 1
-            End With
-        End If
-        ' Bottom border?
-        If bottom Then
-            With Selection
-                .Borders(xlBottom).LineStyle = xlContinuous
-                .Borders(xlBottom).Weight = style
-                .Borders(xlBottom).ColorIndex = 1
-            End With
-        End If
-    End If
+    End With
+End Sub
 
-End Function
-
-Public Function setUpperLimit(refCell As String)
-
-    With Selection.Validation
+' Applies decimal validation (0..refCell) directly to rng — no .Select required.
+Public Sub setUpperLimit(rng As Range, refCell As String)
+    With rng.Validation
         .Delete
         .Add Type:=xlValidateDecimal, AlertStyle:=xlValidAlertStop, Operator _
-        :=xlBetween, Formula1:="0", Formula2:="=" & refCell
+            :=xlBetween, Formula1:="0", Formula2:="=" & refCell
         .IgnoreBlank = True
         .InCellDropdown = True
         .InputTitle = ""
@@ -205,8 +131,7 @@ Public Function setUpperLimit(refCell As String)
         .ShowInput = False
         .ShowError = True
     End With
-    
-End Function
+End Sub
 
 Public Sub TestDatenUebernehmen()
 
@@ -396,5 +321,4 @@ UpdateCheckError:
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
     
 End Function
-
 

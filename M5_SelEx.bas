@@ -82,65 +82,46 @@ Public Function PaintSelXCfgPage()
     
     ' Abi Zelle
     With ws.Range(ws.Cells(CfgRowStart, CfgColStart), ws.Cells(CfgRowStart, CfgColStart + CInt(floor(CDbl(span) / 2))))
-        .Select
-        Call setBorder(False, True, False, True, False, xlMedium, gClrHeader, True, xlLeft, xlCenter)
+        Call setBorder(.Cells, False, True, False, True, False, xlMedium, gClrHeader, True, xlLeft, xlCenter)
         .Font.Bold = True
     End With
     ' Kurs Zelle
     With ws.Range(ws.Cells(CfgRowStart, CfgColStart + CInt(floor(CDbl(span) / 2)) + 1), ws.Cells(CfgRowStart, CfgColStart + span))
-        .Select
-        Call setBorder(False, False, True, True, False, xlMedium, gClrHeader, True, xlRight, xlCenter)
+        Call setBorder(.Cells, False, False, True, True, False, xlMedium, gClrHeader, True, xlRight, xlCenter)
         .Font.Bold = True
     End With
     ' Bereich Zelle
     With ws.Range(ws.Cells(CfgRowStart + 1, CfgColStart), ws.Cells(CfgRowStart + 2, CfgColStart + span))
-        .Select
-        Call setBorder(False, True, True, False, True, xlMedium, gClrHeader, True, xlHAlignCenterAcrossSelection, xlCenter)
+        Call setBorder(.Cells, False, True, True, False, True, xlMedium, gClrHeader, True, xlHAlignCenterAcrossSelection, xlCenter)
         .Font.Bold = True
         .Font.Size = 12
     End With
 
     ' Überschrift Namen
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, True)
-    End With
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1)), False, True, True, True, True, xlMedium, gClrTheme1, True)
     ' Überschrift Aufgaben / Punkte
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + span))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, False, xlCenter, xlBottom)
-    End With
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + span)), False, True, True, True, True, xlMedium, gClrTheme1, False, xlCenter, xlBottom)
 
     ' Namen
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx - 1))
-        .Select
-        Call setBorder(False, True, True, True, True, xlThin, gClrTheme1, False)
-    End With
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx - 1)), False, True, True, True, True, xlThin, gClrTheme1, False)
     ' Punkte-Bereich
     With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + colOffset - 1))
-        .Select
-        Call setBorder(False, True, True, True, True, xlThin, RGB(255, 255, 255), False, xlCenter, xlCenter)
+        Call setBorder(.Cells, False, True, True, True, True, xlThin, RGB(255, 255, 255), False, xlCenter, xlCenter)
         .Locked = False
     End With
-    
+
     ' Erlaube nur "x" als Zelleninhalt, um zu setzen, dass der Schüler diese Aufgabe ausgewählt hat ...
     For i = 0 To colOffset - 1
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i))
-            .Select
-            With .Validation
-                .Delete
-                .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:="x,"
-                .IgnoreBlank = True
-                .InCellDropdown = False
-            End With
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i)).Validation
+            .Delete
+            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:="x,"
+            .IgnoreBlank = True
+            .InCellDropdown = False
         End With
     Next i
-    
+
     ' Border anpassen
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + colOffset - 1))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, 0, True)
-    End With
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + colOffset - 1)), False, True, True, True, True, xlMedium, 0, True)
 
     ' Button hinzufügen
     'Call AddUpdateButton(ws.Cells(CfgRowStart, CfgColStart + CfgColOffsetFirstEx + colOffset + 1), "SelExUpdate")
@@ -151,10 +132,7 @@ Public Function PaintSelXCfgPage()
     Dim txtCommentFieldWidth As Integer, txtCommentFieldHeight As Integer
     txtCommentFieldWidth = 4 ' columns
     txtCommentFieldHeight = 3 ' rows
-    With ws.Range(ws.Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1), ws.Cells(CfgRowStart + 4 + txtCommentFieldHeight - 1, CfgColStart + CfgColOffsetFirstEx + colOffset + 1 + txtCommentFieldWidth))
-        .Select
-        Call setBorder(True, True, True, True, True, xlMedium, 0, True, xlHAlignLeft, xlVAlignCenter)
-    End With
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1), ws.Cells(CfgRowStart + 4 + txtCommentFieldHeight - 1, CfgColStart + CfgColOffsetFirstEx + colOffset + 1 + txtCommentFieldWidth)), True, True, True, True, True, xlMedium, 0, True, xlHAlignLeft, xlVAlignCenter)
     ws.Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).WrapText = True
     ws.Cells(CfgRowStart + 4, CfgColStart + CfgColOffsetFirstEx + colOffset + 1).Value = "In nebenstehender Tabelle, alle gewählten Aufgaben des Schülers mit ""x"" selektieren. Anschließend den 'Wahlaufgaben aktualisieren' Button auf der Config-Seite anklicken!"
 
@@ -360,7 +338,7 @@ Public Sub ApplySelExCrosses()
     Set wsCfg = Worksheets(WbNameSelExConfig)
 
     Dim stride As Integer
-    stride = PupilStride()
+    stride = 1  ' overridden per-sheet inside the loop via SheetStride(wsSht)
 
     i = 0
     Do While True
@@ -371,6 +349,7 @@ Public Sub ApplySelExCrosses()
         currSht = wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Value
         currTsk = wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + i).Value
         Set wsSht = Worksheets(currSht)
+        stride = SheetStride(wsSht)
 
         found = False
         currCol = -1
@@ -388,7 +367,7 @@ Public Sub ApplySelExCrosses()
         wsSht.Unprotect Password:=WbPw
         For pLine = 0 To gNumOfPupils - 1
             Dim physRow As Long
-            physRow = PhysicalPupilRow(pLine)
+            physRow = PhysicalPupilRow(pLine, stride)
             Dim extraRow As Integer
             If wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstPupil + pLine, CfgColStart + CfgColOffsetFirstEx + i).Value = "x" Then
                 Call RemoveCross(wsSht.Cells(physRow, currCol), skipProtect:=True)
@@ -429,7 +408,7 @@ Public Function CrossOutCell(cell As Range, Optional skipProtect As Boolean = Fa
     ' Set bg - alternate based on pupil row index (stride-aware)
     Dim pupilIdx As Long
     Dim stride As Integer
-    stride = PupilStride()
+    stride = SheetStride(ws)
     pupilIdx = (cell.row - (CfgRowStart + CfgRowOffsetFirstPupil)) \ stride
     Dim crossClr As Long
     If pupilIdx Mod 2 = 0 Then
@@ -551,5 +530,4 @@ Public Function PupilHasSelEx(PupilIndex As Integer, Section As String, Number A
     PupilHasSelEx = False
 
 End Function
-
 

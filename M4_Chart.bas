@@ -24,9 +24,10 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
     ' Create chart
     '------------------------------------
     'Border
-    Worksheets(WbNamePrintSheet).Range(Cells(row - 1, 1), Cells(row - 1, 17)).Select
-    Call setBorder(False, True, True, True, True, xlThin, 0, True)
-    With Selection.Font
+    Dim rngChartHdr As Range
+    Set rngChartHdr = Worksheets(WbNamePrintSheet).Range(Cells(row - 1, 1), Cells(row - 1, 17))
+    Call setBorder(rngChartHdr, False, True, True, True, True, xlThin, 0, True)
+    With rngChartHdr.Font
         .Size = 12
         .Bold = True
     End With
@@ -40,8 +41,7 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
     Worksheets(WbNamePrintSheet).Cells(row - 1, col).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiTitle).Column).Address, "$")(1) & CStr(Range(CfgAbiTitle).row) & "&"" ""&" & "TEXT('" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiDate).Column).Address, "$")(1) & CStr(Range(CfgAbiDate).row) & ",""TT.MM.JJJJ"")"
     ' Kurs
     Worksheets(WbNamePrintSheet).Cells(row - 1, 17).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiTeacher).Column).Address, "$")(1) & CStr(Range(CfgAbiTeacher).row) & "&"", Kurs ""&'" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiClass).Column).Address, "$")(1) & CStr(Range(CfgAbiClass).row)
-    Worksheets(WbNamePrintSheet).Cells(row - 1, 17).Select
-    Call setBorder(False, False, True, True, True, xlThin, 0, True, xlRight)
+    Call setBorder(Worksheets(WbNamePrintSheet).Cells(row - 1, 17), False, False, True, True, True, xlThin, 0, True, xlRight)
     
     '------------------------------------
     ' Create chart
@@ -105,3 +105,4 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
     graph.Refresh
     
 End Function
+

@@ -13,6 +13,7 @@ Private m_crossedMatrix() As Boolean
 '-----------------------------------------------------
 
 ' Returns how many physical rows each pupil occupies (1 = no ZK/DK, 2 = ZK, 3 = ZK+DK).
+' Reads Config — use only when you need the *intended* stride (e.g. Add/Remove logic).
 Public Function PupilStride() As Integer
     Dim hasZK As Boolean, hasDK As Boolean
     hasZK = Len(Trim(Worksheets(WbNameConfig).Range(CfgZK).Value)) > 0
@@ -20,9 +21,30 @@ Public Function PupilStride() As Integer
     PupilStride = 1 + IIf(hasZK, 1, 0) + IIf(hasDK, 1, 0)
 End Function
 
+' Returns the *actual* stride on a given sheet by checking whether ZK/DK rows
+' have been physically inserted. Always use this instead of PupilStride() whenever
+' you are operating on sheet data — ZK/DK may be configured but not yet added.
+Public Function SheetStride(ws As Worksheet) As Integer
+    Dim firstPupilRow As Long
+    firstPupilRow = CfgRowStart + CfgRowOffsetFirstPupil
+    ' Check just the row(s) immediately below the first pupil row.
+    Dim v1 As String, v2 As String
+    v1 = Trim(ws.Cells(firstPupilRow + 1, CfgColStart + 1).Value)
+    v2 = Trim(ws.Cells(firstPupilRow + 2, CfgColStart + 1).Value)
+    If v1 = "ZK" And v2 = "DK" Then
+        SheetStride = 3
+    ElseIf v1 = "ZK" Then
+        SheetStride = 2
+    Else
+        SheetStride = 1
+    End If
+End Function
+
 ' Returns the physical sheet row for pupil i (0-based).
-Public Function PhysicalPupilRow(pupilIdx As Integer) As Long
-    PhysicalPupilRow = CfgRowStart + CfgRowOffsetFirstPupil + pupilIdx * PupilStride()
+' Pass strideVal when calling inside a loop to avoid repeated sheet reads.
+Public Function PhysicalPupilRow(pupilIdx As Integer, Optional strideVal As Integer = 0) As Long
+    If strideVal = 0 Then strideVal = 1  ' safe default: no ZK/DK assumed
+    PhysicalPupilRow = CfgRowStart + CfgRowOffsetFirstPupil + pupilIdx * strideVal
 End Function
 
 '-----------------------------------------------------
@@ -269,21 +291,33 @@ Private Sub ApplyBordersDirect(rng As Range, fillClr As Long, edgeWeight As Inte
 End Sub
 
 Public Sub RemoveZKDKRows(ws As Worksheet, numOfSubEx As Integer)
-    ' Deletes all ZK/DK extra rows identified by "ZK" or "DK" in the name column.
-    ' Scans from the bottom upward to keep row indices stable during deletion.
-    ' Redefines PupilBlock named range back to pupils-only after removal.
+    ' Collects all ZK/DK rows into a union then deletes them in one operation
+    ' (avoids per-row shifting and is significantly faster).
 
     Dim lastRow As Long
     lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
 
+    ' Unhide all rows in the scan range first — hidden ZK/DK rows must be visible
+    ' before deletion otherwise Excel skips them silently.
+    ws.Range(ws.Rows(CfgRowStart + CfgRowOffsetFirstPupil), ws.Rows(lastRow)).Hidden = False
+
+    Dim deleteRng As Range
     Dim r As Long
-    For r = lastRow To CfgRowStart + CfgRowOffsetFirstPupil Step -1
+    For r = CfgRowStart + CfgRowOffsetFirstPupil To lastRow
         Dim lbl As String
         lbl = ws.Cells(r, CfgColStart + 1).Value
         If lbl = "ZK" Or lbl = "DK" Then
-            ws.Rows(r).Delete Shift:=xlUp
+            If deleteRng Is Nothing Then
+                Set deleteRng = ws.Rows(r)
+            Else
+                Set deleteRng = Union(deleteRng, ws.Rows(r))
+            End If
         End If
     Next r
+
+    If Not deleteRng Is Nothing Then
+        deleteRng.Delete Shift:=xlUp
+    End If
 
     ' Restore named range to pupils-only size
     Call DefinePupilBlockName(ws, numOfSubEx, gNumOfPupils)
@@ -311,6 +345,9 @@ Public Sub RemoveZKDKRows(ws As Worksheet, numOfSubEx As Integer)
         .Borders(xlInsideHorizontal).Weight = xlThin
         .Borders(xlInsideHorizontal).ColorIndex = 1
     End With
+
+    ' show all to update borders and avoid hidden empty rows if config is later changed to add ZK/DK again
+    Call ShowAll
 
 End Sub
 
@@ -426,7 +463,7 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
             ' Always reapply the medium border on the percentage row so that row/column
             ' hiding can never leave the bottom of the pupil block without a thick edge.
             Dim stride As Integer
-            stride = PupilStride()
+            stride = SheetStride(ws)
             Dim pctRow As Long
             pctRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * stride
             Dim span As Integer
@@ -889,18 +926,19 @@ Public Sub UpdateZKDKMismatchHighlight(Optional targetWs As Worksheet = Nothing)
     errNum = 0
     On Error GoTo Cleanup
 
-    Dim stride As Integer
-    stride = PupilStride()
-
     If Not targetWs Is Nothing Then
-        Call ProcessMismatchSheet(targetWs, stride)
+        Call ProcessMismatchSheet(targetWs, SheetStride(targetWs))
     Else
         Dim si As Integer
         For si = 0 To CfgMaxSheets
             Dim sName As String
             sName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, si * 2).Value
             If sName = "" Then Exit For
-            If WSExists(sName) Then Call ProcessMismatchSheet(Worksheets(sName), stride)
+            If WSExists(sName) Then
+                Dim siWs As Worksheet
+                Set siWs = Worksheets(sName)
+                Call ProcessMismatchSheet(siWs, SheetStride(siWs))
+            End If
         Next si
     End If
 
@@ -1046,7 +1084,7 @@ Public Sub NavigateAfterEntry(ws As Worksheet, changedCell As Range)
 
     ' Determine 0-based pupil index from the changed row
     Dim stride As Integer
-    stride = PupilStride()
+    stride = SheetStride(ws)
     Dim firstPupilRow As Long
     firstPupilRow = CfgRowStart + CfgRowOffsetFirstPupil
     Dim pupilIdx As Integer
@@ -1148,7 +1186,7 @@ End Sub
 ' Builds and caches a 2D Boolean matrix: True = sub-exercise column c is NOT crossed
 ' (i.e. available) for pupil p.  Result is keyed by ws.Name; repeated calls for the
 ' same sheet return the cached copy instantly (no SelEx sheet reads).
-Private Function BuildCrossedMatrix(ws As Worksheet, numOfSubEx As Integer) As Boolean()
+Public Function BuildCrossedMatrix(ws As Worksheet, numOfSubEx As Integer) As Boolean()
     ' Return cached result if still valid for this sheet
     If ws.Name = m_crossedSheetName Then
         BuildCrossedMatrix = m_crossedMatrix

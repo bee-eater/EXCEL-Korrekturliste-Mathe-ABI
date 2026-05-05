@@ -77,11 +77,6 @@ Private Function makeSure() As Boolean
         If Request = vbCancel Then
             Exit Function
         End If
-        'Request = MsgBox("Ganz sicher?? Es ist wirklich alles weg!", vbCritical + vbOKCancel, "Ahhhhhhhh...")
-        'If Request = vbCancel Then
-        '    Exit Function
-        'End If
-        ' Not exited -> sure
         makeSure = True
     Else
         makeSure = True
@@ -153,99 +148,66 @@ Private Function PaintSegmentPages()
 
         ' Abi Zelle
         With ws.Range(ws.Cells(CfgRowStart, CfgColStart), ws.Cells(CfgRowStart, CfgColStart + CInt(floor(CDbl(span) / 2))))
-            .Select
-            Call setBorder(False, True, False, True, False, xlMedium, gClrHeader, True, xlLeft, xlCenter)
+            Call setBorder(.Cells, False, True, False, True, False, xlMedium, gClrHeader, True, xlLeft, xlCenter)
             .Font.Bold = True
         End With
         ' Kurs Zelle
         With ws.Range(ws.Cells(CfgRowStart, CfgColStart + CInt(floor(CDbl(span) / 2)) + 1), ws.Cells(CfgRowStart, CfgColStart + span))
-            .Select
-            Call setBorder(False, False, True, True, False, xlMedium, gClrHeader, True, xlRight, xlCenter)
+            Call setBorder(.Cells, False, False, True, True, False, xlMedium, gClrHeader, True, xlRight, xlCenter)
             .Font.Bold = True
         End With
         ' Bereich Zelle
         With ws.Range(ws.Cells(CfgRowStart + 1, CfgColStart), ws.Cells(CfgRowStart + 2, CfgColStart + span))
-            .Select
-            Call setBorder(False, True, True, False, True, xlMedium, gClrHeader, True, xlHAlignCenterAcrossSelection, xlCenter)
+            Call setBorder(.Cells, False, True, True, False, True, xlMedium, gClrHeader, True, xlHAlignCenterAcrossSelection, xlCenter)
             .Font.Bold = True
             .Font.Size = 12
         End With
 
         ' Überschrift Namen
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1))
-            .Select
-            Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, True)
-        End With
+        Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1)), False, True, True, True, True, xlMedium, gClrTheme1, True)
         ' Überschrift Aufgaben / Punkte
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + span))
-            .Select
-            Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, False, xlCenter, xlBottom)
-        End With
+        Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + span)), False, True, True, True, True, xlMedium, gClrTheme1, False, xlCenter, xlBottom)
 
         ' Schüler-Zeilen mit alternierenden Hintergrundfarben
-        ' ZK/DK rows are painted inline at their final stride-aware positions —
-        ' no row insertions needed on a fresh sheet (major perf win).
         Dim iPupilSect As Integer
         Dim rowClrSect As Long
-        Dim strideSect As Integer
-        Dim hasZKSect As Boolean, hasDKSect As Boolean
         Dim physRowSect As Long
-        strideSect = PupilStride()
-        hasZKSect = Len(Trim(Worksheets(WbNameConfig).Range(CfgZK).Value)) > 0
-        hasDKSect = hasZKSect And Len(Trim(Worksheets(WbNameConfig).Range(CfgDK).Value)) > 0
         For iPupilSect = 0 To gNumOfPupils - 1
-            physRowSect = CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect * strideSect
+            physRowSect = CfgRowStart + CfgRowOffsetFirstPupil + iPupilSect
             If iPupilSect Mod 2 = 0 Then
                 rowClrSect = gClrTheme2
             Else
                 rowClrSect = gClrTheme2a
             End If
             ' Namen
-            With ws.Range(ws.Cells(physRowSect, CfgColStart), ws.Cells(physRowSect, CfgColStart + CfgColOffsetFirstEx - 1))
-                .Select
-                Call setBorder(False, True, True, True, True, xlThin, rowClrSect, False)
-            End With
+            Call setBorder(ws.Range(ws.Cells(physRowSect, CfgColStart), ws.Cells(physRowSect, CfgColStart + CfgColOffsetFirstEx - 1)), False, True, True, True, True, xlThin, rowClrSect, False)
             ' Punkte-Bereich (bleibt weiß zur Eingabe)
             With ws.Range(ws.Cells(physRowSect, CfgColStart + CfgColOffsetFirstEx), ws.Cells(physRowSect, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1))
-                .Select
-                Call setBorder(False, True, True, True, True, xlThin, RGB(255, 255, 255), False, xlCenter, xlCenter)
+                Call setBorder(.Cells, False, True, True, True, True, xlThin, RGB(255, 255, 255), False, xlCenter, xlCenter)
                 .Locked = False
             End With
             ' Summe-Bereich — bottom border intentionally omitted: the ZK row's hairline
             ' xlEdgeTop governs that shared border; outer block bottom is set by the
             ' block border pass below, avoiding a spurious thick line before ZK rows.
-            With ws.Range(ws.Cells(physRowSect, CfgColStart + span), ws.Cells(physRowSect, CfgColStart + span))
-                .Select
-                Call setBorder(False, True, True, True, False, xlMedium, rowClrSect, False, xlCenter, xlCenter)
-            End With
-            ' ZK / DK rows painted directly — sheet is fresh, no insertion required
-            If hasZKSect Then
-                Call FormatZKDKRow(ws, physRowSect + 1, numOfSubEx, span, "ZK", rowClrSect, hasDKSect)
-            End If
-            If hasDKSect Then
-                Call FormatZKDKRow(ws, physRowSect + 2, numOfSubEx, span, "DK", rowClrSect)
-            End If
+            Call setBorder(ws.Cells(physRowSect, CfgColStart + span), False, True, True, True, False, xlMedium, rowClrSect, False, xlCenter, xlCenter)
         Next iPupilSect
         For i = 0 To numOfSubEx - 1
-            ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), _
-                     ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect - 1, CfgColStart + CfgColOffsetFirstEx + i)).Select
-            setUpperLimit (CStr(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Address))
+            Call setUpperLimit( _
+                ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx + i), _
+                         ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + i)), _
+                CStr(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + i).Address))
         Next i
 
         ' Prozentualer Punkteschnitt — placed after the full physical block
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect, CfgColStart + span))
-            .Select
-            Call setBorder(False, True, True, True, True, xlMedium, gClrTheme1, True, xlCenter, xlCenter)
+        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + span))
+            Call setBorder(.Cells, False, True, True, True, True, xlMedium, gClrTheme1, True, xlCenter, xlCenter)
             .NumberFormat = "0%"
         End With
         ' Border anpassen — full physical block
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1))
-            .Select
-            Call setBorder(False, True, True, True, True, xlMedium, 0, True)
-        End With
+        Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)), False, True, True, True, True, xlMedium, 0, True)
         ' Re-apply outer border + inside verticals across the full block incl. sum column
         With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), _
-                      ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect - 1, CfgColStart + span))
+                      ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + span))
             .Borders(xlEdgeLeft).LineStyle = xlContinuous
             .Borders(xlEdgeLeft).Weight = xlMedium
             .Borders(xlEdgeLeft).ColorIndex = 1
@@ -264,15 +226,13 @@ Private Function PaintSegmentPages()
         End With
         ' Re-force sum column left border to xlMedium (overridden by xlInsideVertical)
         With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + span), _
-                      ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * strideSect - 1, CfgColStart + span))
+                      ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + span))
             .Borders(xlEdgeLeft).LineStyle = xlContinuous
             .Borders(xlEdgeLeft).Weight = xlMedium
             .Borders(xlEdgeLeft).ColorIndex = 1
         End With
         ' Define PupilBlock named range (replaces the AddZKDKRows call)
-        Call DefinePupilBlockName(ws, numOfSubEx, gNumOfPupils * strideSect)
-
-        ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select
+        Call DefinePupilBlockName(ws, numOfSubEx, gNumOfPupils)
 
     Next actSheet
 
@@ -288,44 +248,67 @@ Private Function FillSegmentPages()
     Dim numOfSubEx As Integer, span As Integer
     Dim i As Integer
     Dim ws As Worksheet
-    ' Pre-compute column letters used repeatedly below (unqualified Cells/Range
-    ' intentionally refers to the active sheet, preserving original behaviour)
+    Dim wsCfg As Worksheet
+    Set wsCfg = Worksheets(WbNameConfig)
+
+    ' Pre-compute all Config-derived column letters and row numbers once,
+    ' qualified against wsCfg — no unqualified Range() calls inside the loop.
     Dim colSectEx As String     ' config column for exercise names (row captions)
     Dim colSectPts As String    ' config column for max points
     Dim colSumFirst As String   ' first sub-exercise column
     Dim colSumLast As String    ' last sub-exercise column
     Dim colPupiFirst As String  ' config first-name column
     Dim colPupiLast As String   ' config last-name column
+    Dim colAbiTitle As String   ' config ABI title column
+    Dim colAbiDate As String    ' config ABI date column
+    Dim colAbiClass As String   ' config ABI class column
+    Dim colExerCount As String  ' config exercise-count base column
     Dim cfgSectBaseRow As Long  ' first data row in config for exercise names
     Dim cfgPupiFirstRow As Long ' first pupil row in config
+    Dim cfgAbiTitleRow As Long
+    Dim cfgAbiDateRow As Long
+    Dim cfgAbiClassRow As Long
+    Dim cfgExerCntRow As Long
+    Dim cfgFirstSectCol As Long
+
+    cfgFirstSectCol = wsCfg.Range(CfgFirstSect).Column
+    cfgSectBaseRow = 2 + wsCfg.Range(CfgFirstSect).row
+    cfgPupiFirstRow = wsCfg.Range(CfgFirstPupi).row
+    cfgAbiTitleRow = wsCfg.Range(CfgAbiTitle).row
+    cfgAbiDateRow = wsCfg.Range(CfgAbiDate).row
+    cfgAbiClassRow = wsCfg.Range(CfgAbiClass).row
+    cfgExerCntRow = wsCfg.Range(CfgExerCount).row
+    colPupiFirst = ColLetter(wsCfg.Range(CfgFirstPupi).Column + 1)
+    colPupiLast = ColLetter(wsCfg.Range(CfgFirstPupi).Column + 2)
+    colAbiTitle = ColLetter(wsCfg.Range(CfgAbiTitle).Column)
+    colAbiDate = ColLetter(wsCfg.Range(CfgAbiDate).Column)
+    colAbiClass = ColLetter(wsCfg.Range(CfgAbiClass).Column)
+    colExerCount = ColLetter(wsCfg.Range(CfgExerCount).Column)
+    colSumFirst = ColLetter(CfgColStart + CfgColOffsetFirstEx)
+
     Dim arrHdr1() As Variant
     Dim arrHdr2() As Variant
 
     For actSheet = 0 To CfgMaxSheets
 
         ' Set name for further processing
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
+        actSheetName = wsCfg.Range(CfgFirstSect).offset(0, actSheet * 2).Value
         If actSheetName = "" Then
             Exit Function
         End If
         Set ws = Worksheets(actSheetName)
-        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
+        numOfSubEx = wsCfg.Range(CfgExerCount).offset(0, actSheet * 2).Value
         span = numOfSubEx + 2 ' Anzahl der Teilaufgaben + 3 Spalten (Index,Name,Summe)
 
-        colSectEx = ColLetter(Range(CfgFirstSect).Column + actSheet * 2)
-        colSectPts = ColLetter(Range(CfgFirstSect).Column + (actSheet * 2) + 1)
-        colSumFirst = ColLetter(CfgColStart + CfgColOffsetFirstEx)
+        colSectEx = ColLetter(cfgFirstSectCol + actSheet * 2)
+        colSectPts = ColLetter(cfgFirstSectCol + actSheet * 2 + 1)
         colSumLast = ColLetter(CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)
-        colPupiFirst = ColLetter(Range(CfgFirstPupi).Column + 1)
-        colPupiLast = ColLetter(Range(CfgFirstPupi).Column + 2)
-        cfgSectBaseRow = 2 + Range(CfgFirstSect).row
-        cfgPupiFirstRow = Range(CfgFirstPupi).row
 
         '------------------------------------
         ' Header-Text
         '------------------------------------
-        ws.Cells(CfgRowStart, CfgColStart).Formula = "='" & WbNameConfig & "'!" & ColLetter(Range(CfgAbiTitle).Column) & CStr(Range(CfgAbiTitle).row) & "&"" ""&" & "YEAR('" & WbNameConfig & "'!" & ColLetter(Range(CfgAbiDate).Column) & CStr(Range(CfgAbiDate).row) & ")"
-        ws.Cells(CfgRowStart, CfgColStart + span).Formula = "=""Kurs ""&'" & WbNameConfig & "'!" & ColLetter(Range(CfgAbiClass).Column) & CStr(Range(CfgAbiClass).row)
+        ws.Cells(CfgRowStart, CfgColStart).Formula = "='" & WbNameConfig & "'!" & colAbiTitle & CStr(cfgAbiTitleRow) & "&"" ""&" & "YEAR('" & WbNameConfig & "'!" & colAbiDate & CStr(cfgAbiDateRow) & ")"
+        ws.Cells(CfgRowStart, CfgColStart + span).Formula = "=""Kurs ""&'" & WbNameConfig & "'!" & colAbiClass & CStr(cfgAbiClassRow)
         ws.Cells(CfgRowStart + 1, CfgColStart).Value = actSheetName
 
         '------------------------------------
@@ -345,15 +328,15 @@ Private Function FillSegmentPages()
                  ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Formula = arrHdr2
 
         ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Value = "Summe"
-        ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "='" & WbNameConfig & "'!" & ColLetter(Range(CfgExerCount).offset(0, (actSheet * 2) + 1).Column) & CStr(Range(CfgExerCount).row)
+        ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "='" & WbNameConfig & "'!" & ColLetter(wsCfg.Range(CfgExerCount).offset(0, (actSheet * 2) + 1).Column) & CStr(cfgExerCntRow)
 
         '------------------------------------
         ' Namen
         '------------------------------------
         For i = 0 To gNumOfPupils - 1
             Dim physRow As Long
-            physRow = CfgRowStart + CfgRowOffsetFirstPupil + i * PupilStride()
-            ws.Cells(physRow, CfgColStart).Value = Worksheets(WbNameConfig).Range(CfgFirstPupi).offset(i, 0).Value
+            physRow = CfgRowStart + CfgRowOffsetFirstPupil + i
+            ws.Cells(physRow, CfgColStart).Value = wsCfg.Range(CfgFirstPupi).offset(i, 0).Value
             ws.Cells(physRow, CfgColStart + 1).Formula = "='" & WbNameConfig & "'!" & colPupiFirst & CStr(cfgPupiFirstRow + i) & "&"", ""&'" & WbNameConfig & "'!" & colPupiLast & CStr(cfgPupiFirstRow + i)
         Next i
 
@@ -361,7 +344,7 @@ Private Function FillSegmentPages()
         ' Summen
         '------------------------------------
         For i = 0 To gNumOfPupils - 1
-            physRow = CfgRowStart + CfgRowOffsetFirstPupil + i * PupilStride()
+            physRow = CfgRowStart + CfgRowOffsetFirstPupil + i
             ws.Cells(physRow, CfgColStart + CfgColOffsetFirstEx + numOfSubEx).Formula = "=SUM(" & colSumFirst & CStr(physRow) & ":" & colSumLast & CStr(physRow) & ")"
         Next i
 
@@ -415,39 +398,27 @@ Private Function PaintGradePage()
 
     ' Abi Zelle
     With ws.Range(ws.Cells(CfgRowStart, CfgColStart), ws.Cells(CfgRowStart, CfgColStart + floor(sheetCnt / 2#)))
-        .Select
-        Call setBorder(False, True, False, True, False, xlMedium, gClrHeader, True, xlLeft, xlCenter)
+        Call setBorder(.Cells, False, True, False, True, False, xlMedium, gClrHeader, True, xlLeft, xlCenter)
         .Font.Bold = True
     End With
     ' Kurs Zelle
     With ws.Range(ws.Cells(CfgRowStart, CfgColStart + floor(sheetCnt / 2#) + 1), ws.Cells(CfgRowStart, CfgColStart + sheetCnt + 4))
-        .Select
-        Call setBorder(False, False, True, True, False, xlMedium, gClrHeader, True, xlRight, xlCenter)
+        Call setBorder(.Cells, False, False, True, True, False, xlMedium, gClrHeader, True, xlRight, xlCenter)
         .Font.Bold = True
     End With
     ' Bereich Zelle
     With ws.Range(ws.Cells(CfgRowStart + 1, CfgColStart), ws.Cells(CfgRowStart + 2, CfgColStart + sheetCnt + 4))
-        .Select
-        Call setBorder(False, True, True, False, True, xlMedium, gClrHeader, True, xlHAlignCenterAcrossSelection, xlCenter)
+        Call setBorder(.Cells, False, True, True, False, True, xlMedium, gClrHeader, True, xlHAlignCenterAcrossSelection, xlCenter)
         .Font.Bold = True
         .Font.Size = 12
     End With
 
     ' Überschrift Namen
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True)
-    End With
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + 1)), False, True, True, True, True, xlMedium, gClrTheme2, True)
     ' Überschrift Summe
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + sheetCnt + 2))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, False, xlCenter, xlBottom)
-    End With
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + sheetCnt + 2)), False, True, True, True, True, xlMedium, gClrTheme2, False, xlCenter, xlBottom)
     ' Überschrift Punkte / Note
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + sheetCnt + 3))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlBottom)
-    End With
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2), ws.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + sheetCnt + 3)), False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlBottom)
 
     ' Schüler-Zeilen mit alternierenden Hintergrundfarben
     Dim iPupil As Integer
@@ -459,42 +430,26 @@ Private Function PaintGradePage()
             rowClr = gClrTheme2a
         End If
         ' Namen
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx - 1))
-            .Select
-            Call setBorder(False, True, True, True, True, xlThin, rowClr, False)
-        End With
+        Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx - 1)), False, True, True, True, True, xlThin, rowClr, False)
         ' Punkte-Bereich
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx + sheetCnt - 1))
-            .Select
-            Call setBorder(False, True, True, True, True, xlThin, rowClr, False, xlCenter, xlCenter)
-        End With
+        Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + CfgColOffsetFirstEx + sheetCnt - 1)), False, True, True, True, True, xlThin, rowClr, False, xlCenter, xlCenter)
         ' Summe-Bereich
-        With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 2), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 2))
-            .Select
-            Call setBorder(False, True, True, True, True, xlMedium, rowClr, False, xlCenter, xlCenter)
-        End With
+        Call setBorder(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 2), False, True, True, True, True, xlMedium, rowClr, False, xlCenter, xlCenter)
         ' Punkte / Noten Bereich
         With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 3), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + iPupil, CfgColStart + sheetCnt + 4))
-            .Select
-            Call setBorder(False, True, True, True, True, xlThin, rowClr, False, xlCenter, xlCenter)
-            Call setBorder(False, True, True, True, True, xlMedium, rowClr, True, xlCenter, xlCenter)
+            Call setBorder(.Cells, False, True, True, True, True, xlThin, rowClr, False, xlCenter, xlCenter)
+            Call setBorder(.Cells, False, True, True, True, True, xlMedium, rowClr, True, xlCenter, xlCenter)
         End With
     Next iPupil
 
     ' Prozentualer Punkteschnitt
     With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils, CfgColStart + sheetCnt + 4))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlCenter)
+        Call setBorder(.Cells, False, True, True, True, True, xlMedium, gClrTheme2, True, xlCenter, xlCenter)
         .style = "Percent"
     End With
 
     ' Border anpassen
-    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2))
-        .Select
-        Call setBorder(False, True, True, True, True, xlMedium, 0, True)
-    End With
-
-    ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart + CfgColOffsetFirstEx).Select
+    Call setBorder(ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2)), False, True, True, True, True, xlMedium, 0, True)
 
 End Function
 
@@ -805,10 +760,8 @@ Public Sub FillSegmentPages_WriteSubPercentagFormulas(ByVal ws As Worksheet, ByV
     ReDim arrFormulas(1 To 1, 1 To numOfSubEx)
 
     ' Pre-calc rows — span the full physical block (pupils + ZK/DK rows)
-    Dim stride As Integer
-    stride = PupilStride()
     firstRow = CfgRowStart + CfgRowOffsetFirstPupil
-    lastRow = firstRow + gNumOfPupils * stride - 1
+    lastRow = firstRow + gNumOfPupils - 1
 
     For i = 0 To numOfSubEx - 1
 
@@ -829,16 +782,12 @@ Public Sub FillSegmentPages_WriteSubPercentagFormulas(ByVal ws As Worksheet, ByV
 
     ' Batch write — row after the full physical block
     Dim pctRow As Long
-    pctRow = firstRow + gNumOfPupils * stride
+    pctRow = firstRow + gNumOfPupils
     ws.Range( _
         ws.Cells(pctRow, CfgColStart + CfgColOffsetFirstEx), _
         ws.Cells(pctRow, CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1) _
     ).Formula = arrFormulas
 
 End Sub
-
-
-
-
 
 
