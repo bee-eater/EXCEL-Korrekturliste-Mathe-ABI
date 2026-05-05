@@ -103,15 +103,19 @@ Public Sub setBorder(rng As Range, merge As Boolean, left As Boolean, right As B
         If horAlign <> 0 Then .HorizontalAlignment = horAlign
         If verAlign <> 0 Then .VerticalAlignment = verAlign
         If edge Then
+            ' Outer edges only
             If left Then .Borders(xlEdgeLeft).LineStyle = xlContinuous: .Borders(xlEdgeLeft).Weight = style: .Borders(xlEdgeLeft).ColorIndex = 1
             If right Then .Borders(xlEdgeRight).LineStyle = xlContinuous: .Borders(xlEdgeRight).Weight = style: .Borders(xlEdgeRight).ColorIndex = 1
             If top Then .Borders(xlEdgeTop).LineStyle = xlContinuous: .Borders(xlEdgeTop).Weight = style: .Borders(xlEdgeTop).ColorIndex = 1
             If bottom Then .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Weight = style: .Borders(xlEdgeBottom).ColorIndex = 1
         Else
+            ' All borders: outer edges + inside grid lines
             If left Then .Borders(xlEdgeLeft).LineStyle = xlContinuous: .Borders(xlEdgeLeft).Weight = style: .Borders(xlEdgeLeft).ColorIndex = 1
             If right Then .Borders(xlEdgeRight).LineStyle = xlContinuous: .Borders(xlEdgeRight).Weight = style: .Borders(xlEdgeRight).ColorIndex = 1
             If top Then .Borders(xlEdgeTop).LineStyle = xlContinuous: .Borders(xlEdgeTop).Weight = style: .Borders(xlEdgeTop).ColorIndex = 1
             If bottom Then .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Weight = style: .Borders(xlEdgeBottom).ColorIndex = 1
+            If .Rows.Count > 1 Then .Borders(xlInsideHorizontal).LineStyle = xlContinuous: .Borders(xlInsideHorizontal).Weight = style: .Borders(xlInsideHorizontal).ColorIndex = 1
+            If .Columns.Count > 1 Then .Borders(xlInsideVertical).LineStyle = xlContinuous: .Borders(xlInsideVertical).Weight = style: .Borders(xlInsideVertical).ColorIndex = 1
         End If
     End With
 End Sub
