@@ -2,6 +2,13 @@ Attribute VB_Name = "M6_ZKDK"
 
 Option Explicit
 
+' Cache for BuildCrossedMatrix — keyed by sheet name so NavigateAfterEntry
+' (called on every keypress) avoids re-reading the SelEx config sheet each time.
+' Invalidated automatically on sheet name change; call InvalidateCrossedMatrixCache
+' from Workbook_SheetChange when Sh.Name = WbNameSelExConfig.
+Private m_crossedSheetName As String
+Private m_crossedMatrix() As Boolean
+
 '-----------------------------------------------------
 ' ZK / DK STRIDE HELPERS
 '-----------------------------------------------------
@@ -345,7 +352,7 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
         If actSheetName = "" Then Exit For
         If WSExists(actSheetName) Then
             Set ws = Worksheets(actSheetName)
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
+            numOfSubEx = GetNumOfSubEx(actSheetName)
             ws.Unprotect Password:=WbPw
             lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
             Dim firstPupilRow As Long
@@ -468,7 +475,7 @@ Public Sub AddAllZKDKRows()
                     Dim dkWs As Worksheet
                     Set dkWs = Worksheets(dkName)
                     Dim dkNumEx As Integer
-                    dkNumEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, dkSheet * 2).Value
+                    dkNumEx = GetNumOfSubEx(dkName)
                     dkWs.Unprotect Password:=WbPw
                     ' Delete DK rows bottom-up; re-format ZK rows to remove softBottom
                     Dim dkSpan As Integer
@@ -530,7 +537,7 @@ Public Sub AddAllZKDKRows()
         If actSheetName = "" Then Exit For
         If WSExists(actSheetName) Then
             Set ws = Worksheets(actSheetName)
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
+            numOfSubEx = GetNumOfSubEx(actSheetName)
             span = numOfSubEx + 2
             ws.Unprotect Password:=WbPw
             Call AddZKDKRows(ws, numOfSubEx, span)
@@ -581,7 +588,7 @@ Public Sub RemoveAllZKDKRows()
         If actSheetName = "" Then Exit For
         If WSExists(actSheetName) Then
             Set ws = Worksheets(actSheetName)
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
+            numOfSubEx = GetNumOfSubEx(actSheetName)
             ws.Unprotect Password:=WbPw
             Call RemoveZKDKRows(ws, numOfSubEx)
             ws.Activate
@@ -677,7 +684,7 @@ Private Sub ImportZKDKFromFile(targetLabel As String)
         If WSExists(actSheetName) Then
             Set ws = Worksheets(actSheetName)
             Set srcWs = srcWb.Worksheets(actSheetName)
-            numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
+            numOfSubEx = GetNumOfSubEx(actSheetName)
             ws.Unprotect Password:=WbPw
             lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
             For r = CfgRowStart + CfgRowOffsetFirstPupil To lastRow
@@ -808,125 +815,338 @@ End Function
 ' Highlights ZK/DK point cells that contain a value differing from the main pupil row.
 ' Light-red (gClrPlus1) = mismatch; white = matches or empty.
 ' Safe to call standalone (e.g. from a button) or after import.
-Public Sub UpdateZKDKMismatchHighlight()
+Public Sub UpdateZKDKMismatchHighlight(Optional targetWs As Worksheet = Nothing)
 
     Call Init
 
-    Dim actSheet As Integer
-    Dim actSheetName As String
-    Dim numOfSubEx As Integer
-    Dim ws As Worksheet
+    ' Preserve active cell so Tab/Enter navigation is not disrupted
+    Dim savedSheet As Worksheet
+    Dim savedCell As Range
+    Set savedSheet = ActiveSheet
+    Set savedCell = ActiveCell
 
     Application.ScreenUpdating = False
+    Application.EnableEvents = False   ' prevent re-entrant SheetChange while writing colors
 
-    For actSheet = 0 To CfgMaxSheets
-        actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
-        If actSheetName = "" Then Exit For
-        If Not WSExists(actSheetName) Then GoTo NextMismatchSheet
-        Set ws = Worksheets(actSheetName)
-        numOfSubEx = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
-        ws.Unprotect Password:=WbPw
+    On Error GoTo Cleanup
 
-        Dim stride As Integer
-        stride = PupilStride()
-        If stride = 1 Then GoTo ProtectAndNext   ' no ZK/DK rows at all
+    Dim stride As Integer
+    stride = PupilStride()
 
-        ' Build a crossed matrix from the SelEx config sheet (cheap: one scan per sheet).
-        ' crossedMatrix(p, c) = True means that sub-exercise column c is crossed for pupil p.
-        Dim crossedMatrix() As Boolean
-        ReDim crossedMatrix(0 To gNumOfPupils - 1, 0 To numOfSubEx - 1)
-        If WSExists(WbNameSelExConfig) Then
-            Dim wsCfg As Worksheet
-            Set wsCfg = Worksheets(WbNameSelExConfig)
-            Dim si As Integer
-            si = 0
-            Do While True
-                Dim cfgSht As String
-                cfgSht = wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx + 1, CfgColStart + CfgColOffsetFirstEx + si).Value
-                If cfgSht = "" Then Exit Do
-                If cfgSht = ws.Name Then
-                    ' Find which sub-exercise column on this sheet the SelEx task maps to
-                    Dim cfgTsk As String
-                    cfgTsk = wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + si).Value
-                    Dim su As Integer
-                    For su = 0 To numOfSubEx - 1
-                        If ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, CfgColStart + CfgColOffsetFirstEx + su).Value = cfgTsk Then
-                            ' Populate per-pupil crossed flag for this column
-                            Dim sp As Integer
-                            For sp = 0 To gNumOfPupils - 1
-                                If wsCfg.Cells(CfgRowStart + CfgRowOffsetFirstPupil + sp, CfgColStart + CfgColOffsetFirstEx + si).Value <> "x" Then
-                                    crossedMatrix(sp, su) = True
-                                End If
-                            Next sp
-                            Exit For
-                        End If
-                    Next su
-                End If
-                si = si + 1
-            Loop
-        End If
+    If Not targetWs Is Nothing Then
+        Call ProcessMismatchSheet(targetWs, stride)
+    Else
+        Dim si As Integer
+        For si = 0 To CfgMaxSheets
+            Dim sName As String
+            sName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, si * 2).Value
+            If sName = "" Then Exit For
+            If WSExists(sName) Then Call ProcessMismatchSheet(Worksheets(sName), stride)
+        Next si
+    End If
 
-        Dim p As Integer
-        For p = 0 To gNumOfPupils - 1
-            Dim mainRow As Long
-            mainRow = PhysicalPupilRow(p)
-            Dim c As Integer
-            For c = 0 To numOfSubEx - 1
-                Dim col As Long
-                col = CfgColStart + CfgColOffsetFirstEx + c
-                Dim mainVal As Variant
-                mainVal = ws.Cells(mainRow, col).Value
-
-                ' Check each sub-row in the stride block and act only on actual ZK/DK rows
-                Dim offset As Integer
-                For offset = 1 To stride - 1
-                    Dim subRow As Long
-                    subRow = mainRow + offset
-                    Dim subLbl As String
-                    subLbl = ws.Cells(subRow, CfgColStart + 1).Value
-                    If subLbl = "ZK" Or subLbl = "DK" Then
-                        Dim subCell As Range
-                        Set subCell = ws.Cells(subRow, col)
-                        ' Skip cells that are crossed out by SelEx
-                        If crossedMatrix(p, c) Then GoTo NextOffset
-                        Dim subVal As Variant
-                        subVal = subCell.Value
-                        If IsNumeric(subVal) And subVal <> "" Then
-                            If IsNumeric(mainVal) And mainVal <> "" Then
-                                If CDbl(subVal) > CDbl(mainVal) Then
-                                    subCell.Interior.color = gClrZKDKDiffGt
-                                ElseIf CDbl(subVal) < CDbl(mainVal) Then
-                                    subCell.Interior.color = gClrZKDKDiffLt
-                                Else
-                                    subCell.Interior.color = RGB(255, 255, 255)
-                                End If
-                            Else
-                                ' main is empty but ZK/DK has a value
-                                subCell.Interior.color = RGB(255, 255, 255)
-                            End If
-                        Else
-                            subCell.Interior.color = RGB(255, 255, 255)
-                        End If
-                    End If
-NextOffset:
-                Next offset
-            Next c
-        Next p
-
-ProtectAndNext:
-        If DevMode <> 1 Then
-            ws.Protect Password:=WbPw
-            ws.EnableSelection = xlUnlockedCells
-        End If
-NextMismatchSheet:
-    Next actSheet
-
+Cleanup:
+    Application.EnableEvents = True
+    ' Restore original sheet/cell before re-enabling screen updates
+    ' so NavigateAfterEntry (called after us) can take over without a visible flash
+    On Error Resume Next
+    savedSheet.Activate
+    savedCell.Select
+    On Error GoTo 0
     Application.ScreenUpdating = True
 
 End Sub
 
+Private Sub ProcessMismatchSheet(ws As Worksheet, stride As Integer)
+    Dim numOfSubEx As Integer
+    numOfSubEx = GetNumOfSubEx(ws.Name)
+    If numOfSubEx = 0 Or stride = 1 Then Exit Sub
 
+    ws.Unprotect Password:=WbPw
 
+    ' Build crossed matrix via shared helper (True = column crossed out for that pupil)
+    Dim crossedMatrix() As Boolean
+    crossedMatrix = BuildCrossedMatrix(ws, numOfSubEx)
+
+    ' Bulk-read the entire pupil+ZK/DK block into a Variant array.
+    ' Columns: starting at CfgColStart+1 (label) through last exercise column.
+    ' In the array: label = col 1; exercise col c (0-based) = col (CfgColOffsetFirstEx + c).
+    Dim firstPupilRow As Long
+    firstPupilRow = CfgRowStart + CfgRowOffsetFirstPupil
+    Dim dataBlock As Variant
+    dataBlock = ws.Range( _
+        ws.Cells(firstPupilRow, CfgColStart + 1), _
+        ws.Cells(firstPupilRow + gNumOfPupils * stride - 1, _
+                 CfgColStart + CfgColOffsetFirstEx + numOfSubEx - 1)).Value
+
+    Dim p As Integer
+    For p = 0 To gNumOfPupils - 1
+        Dim mainBlockRow As Long
+        mainBlockRow = p * stride + 1              ' 1-based row in dataBlock
+        Dim mainSheetRow As Long
+        mainSheetRow = firstPupilRow + p * stride  ' absolute sheet row for color writes
+
+        Dim c As Integer
+        For c = 0 To numOfSubEx - 1
+            Dim blockCol As Long
+            blockCol = CfgColOffsetFirstEx + c     ' 1-based col in dataBlock
+            Dim mainVal As Variant
+            mainVal = dataBlock(mainBlockRow, blockCol)
+
+            Dim offset As Integer
+            For offset = 1 To stride - 1
+                Dim subBlockRow As Long
+                subBlockRow = mainBlockRow + offset
+                Dim subLbl As String
+                subLbl = CStr(dataBlock(subBlockRow, 1))
+                If (subLbl = "ZK" Or subLbl = "DK") And Not crossedMatrix(p, c) Then
+                    Dim subVal As Variant
+                    subVal = dataBlock(subBlockRow, blockCol)
+                    Dim newClr As Long
+                    If IsNumeric(subVal) And subVal <> "" Then
+                        If IsNumeric(mainVal) And mainVal <> "" Then
+                            If CDbl(subVal) > CDbl(mainVal) Then
+                                newClr = gClrZKDKDiffGt
+                            ElseIf CDbl(subVal) < CDbl(mainVal) Then
+                                newClr = gClrZKDKDiffLt
+                            Else
+                                newClr = RGB(255, 255, 255)
+                            End If
+                        Else
+                            newClr = RGB(255, 255, 255)
+                        End If
+                    Else
+                        newClr = RGB(255, 255, 255)
+                    End If
+                    ws.Cells(mainSheetRow + offset, CfgColStart + CfgColOffsetFirstEx + c).Interior.color = newClr
+                End If
+            Next offset
+        Next c
+    Next p
+
+    If DevMode <> 1 Then
+        ws.Protect Password:=WbPw
+        ws.EnableSelection = xlUnlockedCells
+    End If
+
+End Sub
+
+'-----------------------------------------------------
+' POST-ENTRY NAVIGATION
+'-----------------------------------------------------
+
+' Moves selection to the next logical cell after a value is entered in an exercise column.
+' Call from Workbook_SheetChange AFTER UpdateZKDKMismatchHighlight:
+'   Call UpdateZKDKMismatchHighlight(Sh)
+'   Call NavigateAfterEntry(Sh, Target)
+'
+' Behaviour:
+'   - Within a row: moves one column to the right.
+'   - At the last exercise column: wraps to the first exercise column of the next row
+'     that belongs to the same corrector type (ZK -> next ZK row, DK -> next DK row,
+'     main pupil row -> next main pupil row).  Wraps around to the first row of that
+'     type when the last pupil is reached.
+Public Sub NavigateAfterEntry(ws As Worksheet, changedCell As Range)
+    ' Only handle single-cell changes in known segment sheets
+    If changedCell.Cells.Count > 1 Then Exit Sub
+
+    Dim cellIsEmpty As Boolean
+    cellIsEmpty = IsEmpty(changedCell.Value) Or changedCell.Value = ""
+
+    ' Check the per-option config flags (1 = enabled, anything else = disabled)
+    If cellIsEmpty Then
+        If Worksheets(WbNameConfig).Range(CfgOptNavAfterDel).Value <> 1 Then Exit Sub
+    Else
+        If Worksheets(WbNameConfig).Range(CfgOptNavAfterIns).Value <> 1 Then Exit Sub
+    End If
+
+    Dim numOfSubEx As Integer
+    numOfSubEx = GetNumOfSubEx(ws.Name)
+    If numOfSubEx = 0 Then Exit Sub
+
+    Dim firstCol As Long
+    firstCol = CfgColStart + CfgColOffsetFirstEx
+    Dim lastCol As Long
+    lastCol = firstCol + numOfSubEx - 1
+
+    ' Only act on cells inside the exercise column range
+    Dim changedCol As Long
+    changedCol = changedCell.Column
+    If changedCol < firstCol Or changedCol > lastCol Then Exit Sub
+
+    ' Classify the changed row (ZK / DK / main pupil row)
+    Dim rowType As String
+    rowType = GetRowType(ws, changedCell.row)
+    If rowType = "" Then Exit Sub
+
+    ' Determine 0-based pupil index from the changed row
+    Dim stride As Integer
+    stride = PupilStride()
+    Dim firstPupilRow As Long
+    firstPupilRow = CfgRowStart + CfgRowOffsetFirstPupil
+    Dim pupilIdx As Integer
+    pupilIdx = CInt((changedCell.row - firstPupilRow) \ stride)
+
+    ' Build crossed matrix once for this sheet
+    Dim crossedMatrix() As Boolean
+    crossedMatrix = BuildCrossedMatrix(ws, numOfSubEx)
+
+    Dim nextRow As Long
+    Dim nextCol As Long
+    nextRow = 0
+    nextCol = 0
+
+    ' Try to find the next non-crossed column to the right in the same row
+    Dim c As Integer
+    For c = (changedCol - firstCol + 1) To numOfSubEx - 1
+        If Not crossedMatrix(pupilIdx, c) Then
+            nextRow = changedCell.row
+            nextCol = firstCol + c
+            Exit For
+        End If
+    Next c
+
+    ' No available column to the right — wrap to the next same-type row
+    If nextRow = 0 Then
+        Dim maxRow As Long
+        maxRow = firstPupilRow + gNumOfPupils * stride - 1
+        Dim scanRow As Long
+        Dim scanPupil As Integer
+        ' Scan forward
+        For scanRow = changedCell.row + 1 To maxRow
+            If GetRowType(ws, scanRow) = rowType Then
+                scanPupil = CInt((scanRow - firstPupilRow) \ stride)
+                nextCol = FirstAvailColForPupil(crossedMatrix, scanPupil, numOfSubEx, firstCol)
+                If nextCol > 0 Then
+                    nextRow = scanRow
+                    Exit For
+                End If
+            End If
+        Next scanRow
+        ' Wrap around from the first pupil row
+        If nextRow = 0 Then
+            For scanRow = firstPupilRow To changedCell.row - 1
+                If GetRowType(ws, scanRow) = rowType Then
+                    scanPupil = CInt((scanRow - firstPupilRow) \ stride)
+                    nextCol = FirstAvailColForPupil(crossedMatrix, scanPupil, numOfSubEx, firstCol)
+                    If nextCol > 0 Then
+                        nextRow = scanRow
+                        Exit For
+                    End If
+                End If
+            Next scanRow
+        End If
+    End If
+
+    If nextRow = 0 Or nextCol = 0 Then Exit Sub
+
+    On Error Resume Next
+    ws.Cells(nextRow, nextCol).Select
+    On Error GoTo 0
+End Sub
+
+' Returns "ZK", "DK", "MAIN" or "" for the corrector-type label in the name column of rowNum.
+Private Function GetRowType(ws As Worksheet, rowNum As Long) As String
+    Dim lbl As String
+    lbl = ws.Cells(rowNum, CfgColStart + 1).Value
+    If lbl = "ZK" Then
+        GetRowType = "ZK"
+    ElseIf lbl = "DK" Then
+        GetRowType = "DK"
+    ElseIf lbl <> "" Then
+        GetRowType = "MAIN"
+    Else
+        GetRowType = ""
+    End If
+End Function
+
+' Returns the absolute column number of the first non-crossed exercise column for pupilIdx,
+' or -1 if every column is crossed for that pupil.
+Private Function FirstAvailColForPupil(crossedMatrix() As Boolean, pupilIdx As Integer, _
+                                       numOfSubEx As Integer, firstCol As Long) As Long
+    Dim c As Integer
+    For c = 0 To numOfSubEx - 1
+        If Not crossedMatrix(pupilIdx, c) Then
+            FirstAvailColForPupil = firstCol + c
+            Exit Function
+        End If
+    Next c
+    FirstAvailColForPupil = -1
+End Function
+
+' Call from Workbook_SheetChange when Sh.Name = WbNameSelExConfig to force a
+' fresh matrix build next time a segment sheet is navigated.
+Public Sub InvalidateCrossedMatrixCache()
+    m_crossedSheetName = ""
+End Sub
+
+' Builds and caches a 2D Boolean matrix: True = sub-exercise column c is NOT crossed
+' (i.e. available) for pupil p.  Result is keyed by ws.Name; repeated calls for the
+' same sheet return the cached copy instantly (no SelEx sheet reads).
+Private Function BuildCrossedMatrix(ws As Worksheet, numOfSubEx As Integer) As Boolean()
+    ' Return cached result if still valid for this sheet
+    If ws.Name = m_crossedSheetName Then
+        BuildCrossedMatrix = m_crossedMatrix
+        Exit Function
+    End If
+
+    Dim matrix() As Boolean
+    ReDim matrix(0 To gNumOfPupils - 1, 0 To numOfSubEx - 1)
+
+    If WSExists(WbNameSelExConfig) Then
+        Dim wsCfg As Worksheet
+        Set wsCfg = Worksheets(WbNameSelExConfig)
+
+        ' Bulk-read the SelEx config block in a single call:
+        '   Row 1 = task names, Row 2 = sheet names, Rows 3..2+gNumOfPupils = pupil marks.
+        Dim maxCols As Integer
+        maxCols = (CfgMaxSheets + 1) * CfgMaxExercisesPerSection
+        Dim cfgFirstDataRow As Long
+        cfgFirstDataRow = CfgRowStart + CfgRowOffsetFirstEx
+        Dim cfgFirstDataCol As Long
+        cfgFirstDataCol = CfgColStart + CfgColOffsetFirstEx
+
+        Dim cfgBlock As Variant
+        cfgBlock = wsCfg.Range( _
+            wsCfg.Cells(cfgFirstDataRow, cfgFirstDataCol), _
+            wsCfg.Cells(cfgFirstDataRow + 1 + gNumOfPupils - 1, _
+                        cfgFirstDataCol + maxCols - 1)).Value
+
+        ' Bulk-read the ws task-header row to match SelEx task names to ws columns
+        Dim wsHeader As Variant
+        wsHeader = ws.Range( _
+            ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, cfgFirstDataCol), _
+            ws.Cells(CfgRowStart + CfgRowOffsetFirstEx, cfgFirstDataCol + numOfSubEx - 1)).Value
+
+        Dim ci As Integer
+        For ci = 1 To maxCols
+            If CStr(cfgBlock(2, ci)) = "" Then Exit For   ' row 2 = sheet-name row
+            If CStr(cfgBlock(2, ci)) = ws.Name Then
+                Dim cfgTsk As String
+                cfgTsk = CStr(cfgBlock(1, ci))             ' row 1 = task-name row
+                ' Find the matching exercise column in ws
+                Dim su As Integer
+                For su = 1 To numOfSubEx
+                    If CStr(wsHeader(1, su)) = cfgTsk Then
+                        Dim sp As Integer
+                        For sp = 1 To gNumOfPupils
+                            ' rows 3..2+gNumOfPupils in cfgBlock = pupil data
+                            If CStr(cfgBlock(2 + sp, ci)) <> "x" Then
+                                matrix(sp - 1, su - 1) = True
+                            End If
+                        Next sp
+                        Exit For
+                    End If
+                Next su
+            End If
+        Next ci
+    End If
+
+    ' Store in cache
+    m_crossedSheetName = ws.Name
+    m_crossedMatrix = matrix
+    BuildCrossedMatrix = matrix
+End Function
 
 
 

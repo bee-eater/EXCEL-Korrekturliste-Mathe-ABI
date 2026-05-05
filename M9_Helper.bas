@@ -1,4 +1,5 @@
 Attribute VB_Name = "M9_Helper"
+
 Option Explicit
 
 Function WSExists(n As String) As Boolean
@@ -10,6 +11,18 @@ Function WSExists(n As String) As Boolean
       Exit Function
     End If
   Next ws
+End Function
+
+' Returns the number of sub-exercises for the named segment sheet, or 0 if not found.
+Public Function GetNumOfSubEx(sheetName As String) As Integer
+    Dim i As Integer
+    For i = 0 To CfgMaxSheets
+        If Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value = sheetName Then
+            GetNumOfSubEx = CInt(Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, i * 2).Value)
+            Exit Function
+        End If
+    Next i
+    GetNumOfSubEx = 0
 End Function
 
 ' Sourcecode exportieren für Versionsverwaltung
@@ -377,6 +390,8 @@ UpdateCheckError:
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
     
 End Function
+
+
 
 
 

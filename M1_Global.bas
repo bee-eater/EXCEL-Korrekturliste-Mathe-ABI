@@ -4,9 +4,9 @@ Option Explicit
 '-----------------------------------------------------
 ' KONSTANTEN
 '-----------------------------------------------------
-Public Const DevMode = 0
+Public Const DevMode = 1
 Public Const WbPw = ""
-Public Const Version = "v2.2.0-beta1"
+Public Const Version = "v2.2.0-beta3"
 
 Public Const WbNameConfig = "Config"
 Public Const WbNameSelExConfig = "ConfigW"
@@ -36,6 +36,9 @@ Public Const CfgDK = "$G$28"         ' Zelle in der der Drittkorrektor steht (de
 
 Public Const CfgAbiTitle = "$F$2"    ' Zelle mit dem Titel der Arbeit
 Public Const CfgUpdateInfo = "$J$26" ' Zelle mit der Update-Info
+
+Public Const CfgOptNavAfterIns = "$V$40"
+Public Const CfgOptNavAfterDel = "$V$41"
 
 Public Const CfgPrintNameCol = 5     ' Spalte für Namen auf Druckseite
 
@@ -118,3 +121,4 @@ Public Function Init()
     Next i
     
 End Function
+
