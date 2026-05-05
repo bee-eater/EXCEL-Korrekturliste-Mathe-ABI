@@ -30,8 +30,15 @@ Public Function ExportSourceFiles()
     destPath = Application.ActiveWorkbook.Path & "\"
     Dim component As VBComponent
     For Each component In Application.VBE.ActiveVBProject.VBComponents
-        If component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule Then
+        If (component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule) And component.Name <> "JsonConverter" Then
             component.Export destPath & component.Name & ToFileExtension(component.Type)
+        ElseIf component.Type = vbext_ct_Document Then
+            ' Export ThisWorkbook and the Config sheet code module
+            If component.Name = "DieseArbeitsmappe" Then
+                component.Export destPath & component.Name & ".bas"
+            ElseIf component.Name = WbNameConfig Or component.Name = WbNameGradeKey Then
+                component.Export destPath & "Sht_" & component.Name & ".bas"
+            End If
         End If
     Next
 
