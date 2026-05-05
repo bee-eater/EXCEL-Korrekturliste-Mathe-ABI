@@ -9,49 +9,49 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
     Dim sheetCnt As Integer
     sheetCnt = 0
     For i = 0 To CfgMaxSheets
-        If WSExists(Worksheets(WbNameConfig).range(CfgFirstSect).Offset(0, i * 2).Value) Then
+        If WSExists(Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value) Then
             sheetCnt = sheetCnt + 1
         End If
     Next i
     For i = 0 To CfgMaxExercisesPerSection
-        ThisWorkbook.Worksheets(ws).Cells(row, col).Offset(0, i).Value = i
-        ThisWorkbook.Worksheets(ws).Cells(row, col).Offset(1, i).Formula = "=COUNTIF('" & WbNameGradeSheet & "'!$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils) & "," & Split(Cells(1, col + i).Address, "$")(1) & CStr(row) & ")"
+        ThisWorkbook.Worksheets(ws).Cells(row, col).offset(0, i).Value = i
+        ThisWorkbook.Worksheets(ws).Cells(row, col).offset(1, i).Formula = "=COUNTIF('" & WbNameGradeSheet & "'!$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil) & ":$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils) & "," & Split(Cells(1, col + i).Address, "$")(1) & CStr(row) & ")"
     Next i
-    ThisWorkbook.Worksheets(ws).Cells(row, col).Offset(1, 16).Formula = "=MAX($" & Split(Cells(1, col).Address, "$")(1) & "$" & CStr(row + 1) & ":$" & Split(Cells(1, col + CfgMaxExercisesPerSection).Address, "$")(1) & "$" & CStr(row + 1) & ")"
+    ThisWorkbook.Worksheets(ws).Cells(row, col).offset(1, 16).Formula = "=MAX($" & Split(Cells(1, col).Address, "$")(1) & "$" & CStr(row + 1) & ":$" & Split(Cells(1, col + CfgMaxExercisesPerSection).Address, "$")(1) & "$" & CStr(row + 1) & ")"
     Application.CalculateFull
     
     '------------------------------------
     ' Create chart
     '------------------------------------
     'Border
-    Worksheets(WbNamePrintSheet).range(Cells(row - 1, 1), Cells(row - 1, 17)).Select
-    Call setBorder(False, True, True, True, True, xlThin, 0, True)
-    With Selection.Font
+    Dim rngChartHdr As Range
+    Set rngChartHdr = Worksheets(WbNamePrintSheet).Range(Cells(row - 1, 1), Cells(row - 1, 17))
+    Call setBorder(rngChartHdr, False, True, True, True, True, xlThin, 0, True)
+    With rngChartHdr.Font
         .Size = 12
         .Bold = True
     End With
     ' Notenverteilung " & Format(Worksheets(WbNameGradeSheet).Range("K30").Value, "0.00")
     Worksheets(WbNamePrintSheet).Cells(row - 1, CfgPrintNameCol).Formula = "=""Notenverteilung - ""& CHAR(216) & "" "" & TEXT('" & WbNameGradeSheet & "'!$" & Split(Cells(1, CfgColStart + CfgColOffsetFirstEx + gSheetCnt + 1).Address, "$")(1) & "$" & CStr(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils) & ",""0,00"")"
-    Worksheets(WbNamePrintSheet).range(Cells(row - 1, CfgPrintNameCol), Cells(row - 1, CfgPrintNameCol + 6)).Select
+    Worksheets(WbNamePrintSheet).Range(Cells(row - 1, CfgPrintNameCol), Cells(row - 1, CfgPrintNameCol + 6)).Select
     With Selection
         .HorizontalAlignment = xlCenterAcrossSelection
     End With
     ' Abi
-    Worksheets(WbNamePrintSheet).Cells(row - 1, col).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiTitle).Column).Address, "$")(1) & CStr(range(CfgAbiTitle).row) & "&"" ""&" & "TEXT('" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiDate).Column).Address, "$")(1) & CStr(range(CfgAbiDate).row) & ",""TT.MM.JJJJ"")"
+    Worksheets(WbNamePrintSheet).Cells(row - 1, col).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiTitle).Column).Address, "$")(1) & CStr(Range(CfgAbiTitle).row) & "&"" ""&" & "TEXT('" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiDate).Column).Address, "$")(1) & CStr(Range(CfgAbiDate).row) & ",""TT.MM.JJJJ"")"
     ' Kurs
-    Worksheets(WbNamePrintSheet).Cells(row - 1, 17).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiTeacher).Column).Address, "$")(1) & CStr(range(CfgAbiTeacher).row) & "&"", Kurs ""&'" & WbNameConfig & "'!" & Split(Cells(1, range(CfgAbiClass).Column).Address, "$")(1) & CStr(range(CfgAbiClass).row)
-    Worksheets(WbNamePrintSheet).Cells(row - 1, 17).Select
-    Call setBorder(False, False, True, True, True, xlThin, 0, True, xlRight)
+    Worksheets(WbNamePrintSheet).Cells(row - 1, 17).Formula = "='" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiTeacher).Column).Address, "$")(1) & CStr(Range(CfgAbiTeacher).row) & "&"", Kurs ""&'" & WbNameConfig & "'!" & Split(Cells(1, Range(CfgAbiClass).Column).Address, "$")(1) & CStr(Range(CfgAbiClass).row)
+    Call setBorder(Worksheets(WbNamePrintSheet).Cells(row - 1, 17), False, False, True, True, True, xlThin, 0, True, xlRight)
     
     '------------------------------------
     ' Create chart
     '------------------------------------
     Dim graphO As ChartObject
-    Set graphO = Worksheets(ws).ChartObjects.Add(ThisWorkbook.Worksheets(ws).Cells(row, col).left, ThisWorkbook.Worksheets(ws).Cells(row, col).top, ThisWorkbook.Worksheets(ws).range("R1").left, 400)
+    Set graphO = Worksheets(ws).ChartObjects.Add(ThisWorkbook.Worksheets(ws).Cells(row, col).left, ThisWorkbook.Worksheets(ws).Cells(row, col).top, ThisWorkbook.Worksheets(ws).Range("R1").left, 400)
     Dim graph As Chart
     Set graph = graphO.Chart
     
-    graphO.name = CfgNameChart
+    graphO.Name = CfgNameChart
     
     With graph
         '--------------------------------
@@ -61,12 +61,12 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
         '--------------------------------
         ' Data sources
         '--------------------------------
-        .SetSourceData Source:=Worksheets(ws).range(Cells(row + 1, col), Cells(row + 1, col + CfgMaxExercisesPerSection))
-        .SeriesCollection(1).XValues = Worksheets(ws).range(Cells(row, col), Cells(row, col + CfgMaxExercisesPerSection))
+        .SetSourceData Source:=Worksheets(ws).Range(Cells(row + 1, col), Cells(row + 1, col + CfgMaxExercisesPerSection))
+        .SeriesCollection(1).XValues = Worksheets(ws).Range(Cells(row, col), Cells(row, col + CfgMaxExercisesPerSection))
         '--------------------------------
         ' Format axis
         '--------------------------------
-        .Axes(xlValue).MaximumScale = CInt(ThisWorkbook.Worksheets(ws).Cells(row, col).Offset(1, 16).Value) + 1
+        .Axes(xlValue).MaximumScale = CInt(ThisWorkbook.Worksheets(ws).Cells(row, col).offset(1, 16).Value) + 1
         .Axes(xlValue).MajorUnit = 1
         .Axes(xlValue).MinorUnit = 1
         .Axes(xlValue).Format.Line.Visible = msoFalse
@@ -105,3 +105,4 @@ Public Function AddGradeDistribution(ws As String, row As Integer, col As Intege
     graph.Refresh
     
 End Function
+

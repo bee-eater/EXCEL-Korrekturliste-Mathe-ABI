@@ -1,28 +1,47 @@
 Attribute VB_Name = "M9_Helper"
 Option Explicit
 
-Function WSExists(n As String) As Boolean
-  Dim ws As Worksheet
-  WSExists = False
-  For Each ws In Worksheets
-    If n = ws.name Then
-      WSExists = True
-      Exit Function
-    End If
-  Next ws
-End Function
-
 ' Sourcecode exportieren für Versionsverwaltung
 Public Function ExportSourceFiles()
     Dim destPath As String
     destPath = Application.ActiveWorkbook.Path & "\"
     Dim component As VBComponent
     For Each component In Application.VBE.ActiveVBProject.VBComponents
-        If component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule Then
-            component.Export destPath & component.name & ToFileExtension(component.Type)
+        If (component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule) And component.Name <> "JsonConverter" Then
+            component.Export destPath & component.Name & ToFileExtension(component.Type)
+        ElseIf component.Type = vbext_ct_Document Then
+            ' Export ThisWorkbook and the Config sheet code module
+            If component.Name = "DieseArbeitsmappe" Then
+                component.Export destPath & component.Name & ".bas"
+            ElseIf component.Name = WbNameConfig Or component.Name = WbNameGradeKey Then
+                component.Export destPath & "Sht_" & component.Name & ".bas"
+            End If
         End If
     Next
 
+End Function
+
+Function WSExists(n As String) As Boolean
+  Dim ws As Worksheet
+  WSExists = False
+  For Each ws In Worksheets
+    If n = ws.Name Then
+      WSExists = True
+      Exit Function
+    End If
+  Next ws
+End Function
+
+' Returns the number of sub-exercises for the named segment sheet, or 0 if not found.
+Public Function GetNumOfSubEx(sheetName As String) As Integer
+    Dim i As Integer
+    For i = 0 To CfgMaxSheets
+        If Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, i * 2).Value = sheetName Then
+            GetNumOfSubEx = CInt(Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, i * 2).Value)
+            Exit Function
+        End If
+    Next i
+    GetNumOfSubEx = 0
 End Function
 
 Public Function IsVBProjectAccessible() As Boolean
@@ -66,8 +85,8 @@ End Function
 
 Public Function ceil(ByVal X As Double, Optional ByVal Factor As Double = 1) As Double
     ' X is the value you want to round
-    ' is the multiple to which you want to round
-    Ceiling = (Int(X / Factor) - (X / Factor - Int(X / Factor) > 0)) * Factor
+    ' Factor is the multiple to which you want to round
+    ceil = -Int(-X / Factor) * Factor
 End Function
 
 Public Function floor(ByVal X As Double, Optional ByVal Factor As Double = 1) As Double
@@ -76,107 +95,37 @@ Public Function floor(ByVal X As Double, Optional ByVal Factor As Double = 1) As
     floor = Int(X / Factor) * Factor
 End Function
 
-Public Function setBorder(merge As Boolean, left As Boolean, right As Boolean, top As Boolean, bottom As Boolean, style As Integer, color As Long, Optional edge As Boolean, Optional horAlign As Integer, Optional verAlign As Integer)
-    ' Farbe übernehmen
-    If color <> 0 Then
-        With Selection
-            .Interior.color = color
-        End With
-    End If
-    ' mergen?
-    If merge Then
-        With Selection
-            .MergeCells = True
-        End With
-    End If
-    ' Alignment übergeben?
-    If horAlign <> 0 Then
-        With Selection
-            .HorizontalAlignment = horAlign
-        End With
-    End If
-    ' Alignment übergeben?
-    If verAlign <> 0 Then
-        With Selection
-            .VerticalAlignment = verAlign
-        End With
-    End If
-    If edge Then
-        ' Left border?
-        If left Then
-            With Selection
-                .Borders(xlEdgeLeft).LineStyle = xlContinuous
-                .Borders(xlEdgeLeft).Weight = style
-                .Borders(xlEdgeLeft).ColorIndex = 1
-            End With
+' Applies fill, borders, merge and alignment directly to rng — no .Select required.
+Public Sub setBorder(rng As Range, merge As Boolean, left As Boolean, right As Boolean, top As Boolean, bottom As Boolean, style As Integer, fillColor As Long, Optional edge As Boolean, Optional horAlign As Integer, Optional verAlign As Integer)
+    With rng
+        If fillColor <> 0 Then .Interior.color = fillColor
+        If merge Then .MergeCells = True
+        If horAlign <> 0 Then .HorizontalAlignment = horAlign
+        If verAlign <> 0 Then .VerticalAlignment = verAlign
+        If edge Then
+            ' Outer edges only
+            If left Then .Borders(xlEdgeLeft).LineStyle = xlContinuous: .Borders(xlEdgeLeft).Weight = style: .Borders(xlEdgeLeft).ColorIndex = 1
+            If right Then .Borders(xlEdgeRight).LineStyle = xlContinuous: .Borders(xlEdgeRight).Weight = style: .Borders(xlEdgeRight).ColorIndex = 1
+            If top Then .Borders(xlEdgeTop).LineStyle = xlContinuous: .Borders(xlEdgeTop).Weight = style: .Borders(xlEdgeTop).ColorIndex = 1
+            If bottom Then .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Weight = style: .Borders(xlEdgeBottom).ColorIndex = 1
+        Else
+            ' All borders: outer edges + inside grid lines
+            If left Then .Borders(xlEdgeLeft).LineStyle = xlContinuous: .Borders(xlEdgeLeft).Weight = style: .Borders(xlEdgeLeft).ColorIndex = 1
+            If right Then .Borders(xlEdgeRight).LineStyle = xlContinuous: .Borders(xlEdgeRight).Weight = style: .Borders(xlEdgeRight).ColorIndex = 1
+            If top Then .Borders(xlEdgeTop).LineStyle = xlContinuous: .Borders(xlEdgeTop).Weight = style: .Borders(xlEdgeTop).ColorIndex = 1
+            If bottom Then .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Weight = style: .Borders(xlEdgeBottom).ColorIndex = 1
+            If .Rows.Count > 1 Then .Borders(xlInsideHorizontal).LineStyle = xlContinuous: .Borders(xlInsideHorizontal).Weight = style: .Borders(xlInsideHorizontal).ColorIndex = 1
+            If .Columns.Count > 1 Then .Borders(xlInsideVertical).LineStyle = xlContinuous: .Borders(xlInsideVertical).Weight = style: .Borders(xlInsideVertical).ColorIndex = 1
         End If
-        ' Rigth border?
-        If right Then
-            With Selection
-                .Borders(xlEdgeRight).LineStyle = xlContinuous
-                .Borders(xlEdgeRight).Weight = style
-                .Borders(xlEdgeRight).ColorIndex = 1
-            End With
-        End If
-        ' Top border?
-        If top Then
-            With Selection
-                .Borders(xlEdgeTop).LineStyle = xlContinuous
-                .Borders(xlEdgeTop).Weight = style
-                .Borders(xlEdgeTop).ColorIndex = 1
-            End With
-        End If
-        ' Bottom border?
-        If bottom Then
-            With Selection
-                .Borders(xlEdgeBottom).LineStyle = xlContinuous
-                .Borders(xlEdgeBottom).Weight = style
-                .Borders(xlEdgeBottom).ColorIndex = 1
-            End With
-        End If
-    Else
-        ' Left border?
-        If left Then
-            With Selection
-                .Borders(xlLeft).LineStyle = xlContinuous
-                .Borders(xlLeft).Weight = style
-                .Borders(xlLeft).ColorIndex = 1
-            End With
-        End If
-        ' Rigth border?
-        If right Then
-            With Selection
-                .Borders(xlRight).LineStyle = xlContinuous
-                .Borders(xlRight).Weight = style
-                .Borders(xlRight).ColorIndex = 1
-            End With
-        End If
-        ' Top border?
-        If top Then
-            With Selection
-                .Borders(xlTop).LineStyle = xlContinuous
-                .Borders(xlTop).Weight = style
-                .Borders(xlTop).ColorIndex = 1
-            End With
-        End If
-        ' Bottom border?
-        If bottom Then
-            With Selection
-                .Borders(xlBottom).LineStyle = xlContinuous
-                .Borders(xlBottom).Weight = style
-                .Borders(xlBottom).ColorIndex = 1
-            End With
-        End If
-    End If
+    End With
+End Sub
 
-End Function
-
-Public Function setUpperLimit(refCell As String)
-
-    With Selection.Validation
+' Applies decimal validation (0..refCell) directly to rng — no .Select required.
+Public Sub setUpperLimit(rng As Range, refCell As String)
+    With rng.Validation
         .Delete
         .Add Type:=xlValidateDecimal, AlertStyle:=xlValidAlertStop, Operator _
-        :=xlBetween, Formula1:="0", Formula2:="=" & refCell
+            :=xlBetween, Formula1:="0", Formula2:="=" & refCell
         .IgnoreBlank = True
         .InCellDropdown = True
         .InputTitle = ""
@@ -186,93 +135,92 @@ Public Function setUpperLimit(refCell As String)
         .ShowInput = False
         .ShowError = True
     End With
-    
-End Function
+End Sub
 
 Public Sub TestDatenUebernehmen()
 
     Application.ScreenUpdating = False
     
     Dim ws As String
-    ws = ActiveSheet.name
+    ws = ActiveSheet.Name
     
     Worksheets("TestData").Unprotect Password:=WbPw
 
     Sheets(WbNameTestDaten).Visible = True
 
     Sheets(WbNameTestDaten).Select
-    range("A1:F23").Select
+    Range("A1:F23").Select
     Selection.Copy
     Sheets("Analysis A").Select
-    range("D7").Select
+    Range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    range("D7").Select
+    Range("D7").Select
     Sheets(WbNameTestDaten).Select
-    range("A25:J47").Select
+    Range("A25:J47").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Analysis B").Select
-    range("D7").Select
+    Range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    range("D7").Select
+    Range("D7").Select
     Sheets(WbNameTestDaten).Select
-    range("A49:A71").Select
+    Range("A49:A71").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Stochastik A").Select
-    range("D7").Select
+    Range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    range("D7").Select
+    Range("D7").Select
     Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=27
-    range("A73:E95").Select
+    Range("A73:E95").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Stochastik B").Select
-    range("D7").Select
+    Range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    range("D7").Select
+    Range("D7").Select
     Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=18
-    range("A97:B119").Select
+    Range("A97:B119").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Geometrie A").Select
-    range("D7").Select
+    Range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    range("D7").Select
+    Range("D7").Select
     Sheets(WbNameTestDaten).Select
     ActiveWindow.SmallScroll Down:=33
-    range("A121:E143").Select
+    Range("A121:E143").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Geometrie B").Select
-    range("D7").Select
+    Range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
-    range("D7").Select
+    Range("D7").Select
     
     
     Sheets(WbNameTestDaten).Select
-    range("A147:E169").Select
+    Range("A147:E169").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("ConfigW").Select
-    range("D7").Select
+    Range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=False, Transpose:=False
     
     Sheets(WbNameTestDaten).Select
-    range("A173:E195").Select
+    Range("A173:E195").Select
     Application.CutCopyMode = False
     Selection.Copy
     Sheets("Wahlaufgaben").Select
-    range("D7").Select
+    Range("D7").Select
     Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
         :=True, Transpose:=False
         
@@ -349,18 +297,18 @@ Function CheckForUpdate(currentVersion As String)
 
         ' Compare versions
         If IsVersionGreater(latestVersion, Version) Then
-            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Update available! " + Version + " " + ChrW(8594) + " " + latestVersion
-            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(0, 138, 255) ' Blue
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Update available! " + Version + " " + ChrW(8594) + " " + latestVersion
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 138, 255) ' Blue
         ElseIf IsVersionGreater(Version, latestVersion) Then
-            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Pre-Release! " + Version
-            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(175, 80, 0) ' Orange
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Pre-Release! " + Version
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(175, 80, 0) ' Orange
         Else
-            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = ChrW(10003) + " " + Version
-            ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = ChrW(10003) + " " + Version
+            ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
         End If
     Else
-        ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = http.Status
-        ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
+        ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = http.Status
+        ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
     End If
     
     Worksheets(WbNameConfig).Protect Password:=WbPw
@@ -371,14 +319,10 @@ Function CheckForUpdate(currentVersion As String)
 UpdateCheckError:
     Worksheets(WbNameConfig).Unprotect Password:=WbPw
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
-    ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Value = "Error checking for updates..."
-    ThisWorkbook.Sheets(WbNameConfig).range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
+    ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Error checking for updates..."
+    ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
     Worksheets(WbNameConfig).Protect Password:=WbPw
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
     
 End Function
-
-
-
-
 
