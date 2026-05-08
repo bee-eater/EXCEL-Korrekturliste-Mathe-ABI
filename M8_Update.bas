@@ -6,26 +6,26 @@ Option Explicit
 '
 ' The two entry points have OPPOSITE starting points:
 '
-'  UpdateFromDownload  — run from the OLD workbook
-'    → fetches GitHub latest release, downloads new wb, opens it,
+'  UpdateFromDownload  -- run from the OLD workbook
+'    -> fetches GitHub latest release, downloads new wb, opens it,
 '      then hands off via Application.Run to new wb's RunUpdate.
 '
-'  UpdateFromFile  — run from the NEW workbook
-'    → file dialog picks the OLD workbook to migrate data from;
+'  UpdateFromFile  -- run from the NEW workbook
+'    -> file dialog picks the OLD workbook to migrate data from;
 '      version direction is verified, then RunUpdate is called
 '      directly (we are already in the new workbook's project).
 '
-' RunUpdate(oldFilePath, knownOldVersion)  — runs in the NEW workbook
+' RunUpdate(oldFilePath, knownOldVersion)  -- runs in the NEW workbook
 '   1. Open (or locate) the old workbook
 '   2. Version warning if very old
 '   3. SilentClear this (new) workbook
 '   4. CopyConfiguration  old -> new
-'   5. CreateTables        (direct call — same project)
+'   5. CreateTables        (direct call -- same project)
 '   6. CopyConfigW + SelExUpdate
 '   7. MigrateZKDK         (AddAllZKDKRows direct call)
 '   8. CopyScores
 '   9. ApplyMigrationPatches
-'  10. SaveAs next to old file; offer to close old workbook
+'  10. SaveAs next to old file; close old workbook
 '=======================================================================
 
 ' Minimum version that is considered directly compatible.
@@ -44,7 +44,7 @@ Public Sub UpdateFromDownload()
     ' Already up to date?
     If releaseTag = Version Then
         MsgBox "Du verwendest bereits die aktuelle Version " & Version & ".", _
-               vbInformation, "Kein Update verfügbar"
+               vbInformation, "Kein Update verf" & Chr(252) & "gbar"
         Exit Sub
     End If
 
@@ -53,7 +53,7 @@ Public Sub UpdateFromDownload()
     msg = "Update gefunden!" & vbNewLine & vbNewLine & _
           "Aktuelle Version : " & Version & vbNewLine & _
           "Neue Version     : " & releaseTag & vbNewLine & vbNewLine & _
-          "Die Datei wird heruntergeladen und die Konfiguration übertragen." & vbNewLine & _
+          "Die Datei wird heruntergeladen und die Konfiguration " & Chr(252) & "bertragen." & vbNewLine & _
           "Fortfahren?"
     If MsgBox(msg, vbQuestion + vbYesNo, "Update auf " & releaseTag) <> vbYes Then Exit Sub
 
@@ -63,7 +63,7 @@ Public Sub UpdateFromDownload()
     Dim newFilePath As String
     newFilePath = tmpDir & "Korrekturliste_" & releaseTag & ".xlsm"
 
-    Application.StatusBar = "Lade neue Version herunter …"
+    Application.StatusBar = "Lade neue Version herunter " & Chr(133)
     If Not DownloadFile(downloadUrl, newFilePath) Then
         Application.StatusBar = False
         MsgBox "Download fehlgeschlagen. Bitte Datei manuell von GitHub herunterladen" & vbNewLine & _
@@ -106,7 +106,7 @@ Public Sub UpdateFromFile()
     Dim fd As FileDialog
     Set fd = Application.FileDialog(msoFileDialogFilePicker)
     With fd
-        .Title = "Alte Korrekturliste auswählen (Quelldatei für Migration)"
+        .Title = "Alte Korrekturliste ausw" & Chr(228) & "hlen (Quelldatei f" & Chr(252) & "r Migration)"
         .Filters.Clear
         .Filters.Add "Excel-Arbeitsmappe mit Makros", "*.xlsm"
         .AllowMultiSelect = False
@@ -119,7 +119,7 @@ Public Sub UpdateFromFile()
 
     ' Guard: don't pick the same file we are running from
     If LCase(oldFilePath) = LCase(ThisWorkbook.FullName) Then
-        MsgBox "Bitte eine andere Datei als die aktuelle auswählen.", vbExclamation, "Gleiche Datei"
+        MsgBox "Bitte eine andere Datei als die aktuelle ausw" & Chr(228) & "hlen.", vbExclamation, "Gleiche Datei"
         Exit Sub
     End If
 
@@ -127,7 +127,7 @@ Public Sub UpdateFromFile()
     Dim oldWb As Workbook
     Set oldWb = GetOrOpenWorkbook(oldFilePath)
     If oldWb Is Nothing Then
-        MsgBox "Datei konnte nicht geöffnet werden:" & vbNewLine & oldFilePath, vbCritical, "Fehler"
+        MsgBox "Datei konnte nicht ge" & Chr(246) & "ffnet werden:" & vbNewLine & oldFilePath, vbCritical, "Fehler"
         Exit Sub
     End If
 
@@ -139,8 +139,8 @@ Public Sub UpdateFromFile()
     On Error GoTo 0
     If Trim(oldVer) = "" Then
         oldVer = InputBox( _
-            "Die Version der gewählten Datei konnte nicht automatisch ermittelt werden." & vbNewLine & _
-            "(Die ältere Version enthält keine GetVersion-Funktion.)" & vbNewLine & vbNewLine & _
+            "Die Version der gew" & Chr(228) & "hlten Datei konnte nicht automatisch ermittelt werden." & vbNewLine & _
+            "(Die " & Chr(228) & "ltere Version enth" & Chr(228) & "lt keine GetVersion-Funktion.)" & vbNewLine & vbNewLine & _
             "Bitte Versionsnummer der alten Datei eingeben (z.B. v2.1.0)," & vbNewLine & _
             "oder leer lassen, um als ""unbekannt"" fortzufahren.", _
             "Version der alten Datei", "")
@@ -154,11 +154,11 @@ Public Sub UpdateFromFile()
     If oldVer <> "" Then
         If IsVersionGreater(oldVer, Version) Then
         Dim dirMsg As String
-        dirMsg = "Die gewählte Datei hat Version " & oldVer & _
+        dirMsg = "Die gew" & Chr(228) & "hlte Datei hat Version " & oldVer & _
                  " und ist damit NEUER als diese Version (" & Version & ")." & vbNewLine & vbNewLine & _
-                 "Normalerweise solltest du die ÄLTERE Datei wählen, " & _
-                 "aus der Daten übernommen werden sollen." & vbNewLine & vbNewLine & _
-                 "Bist du sicher, dass du die richtige Datei gewählt hast?" & vbNewLine & _
+                 "Normalerweise solltest du die " & Chr(196) & "LTERE Datei w" & Chr(228) & "hlen, " & _
+                 "aus der Daten " & Chr(252) & "bernommen werden sollen." & vbNewLine & vbNewLine & _
+                 "Bist du sicher, dass du die richtige Datei gew" & Chr(228) & "hlt hast?" & vbNewLine & _
                  "Trotzdem fortfahren?"
         If MsgBox(dirMsg, vbExclamation + vbYesNo, "Falsche Richtung?") <> vbYes Then
             oldWb.Close SaveChanges:=False
@@ -166,7 +166,7 @@ Public Sub UpdateFromFile()
         End If
     ElseIf oldVer = Version Then
         Dim sameVerMsg As String
-        sameVerMsg = "Die gewählte Datei hat dieselbe Version (" & Version & ") wie diese Arbeitsmappe." & vbNewLine & vbNewLine & _
+        sameVerMsg = "Die gew" & Chr(228) & "hlte Datei hat dieselbe Version (" & Version & ") wie diese Arbeitsmappe." & vbNewLine & vbNewLine & _
                      "Trotzdem fortfahren?"
         If MsgBox(sameVerMsg, vbQuestion + vbYesNo, "Gleiche Version") <> vbYes Then
             oldWb.Close SaveChanges:=False
@@ -196,10 +196,19 @@ Public Sub RunUpdate(oldFilePath As String, Optional knownOldVersion As String =
     Dim oldWb As Workbook
     Set oldWb = GetOrOpenWorkbook(oldFilePath)
     If oldWb Is Nothing Then
-        MsgBox "Quelldatei konnte nicht geöffnet werden:" & vbNewLine & oldFilePath, _
+        MsgBox "Quelldatei konnte nicht ge" & Chr(246) & "ffnet werden:" & vbNewLine & oldFilePath, _
                vbCritical, "Fehler"
         Exit Sub
     End If
+
+    ' ---- Backup old workbook -------------------------------------------
+    ' Save a copy of the old file as <name>.bak.xlsm next to the original.
+    Dim bakPath As String
+    bakPath = Left(oldFilePath, Len(oldFilePath) - 5) & ".bak.xlsm"
+    On Error Resume Next
+    Kill bakPath          ' delete existing backup silently
+    On Error GoTo 0
+    oldWb.SaveCopyAs bakPath
 
     ' ---- Determine old version -----------------------------------------
     Dim oldVersion As String
@@ -218,8 +227,8 @@ Public Sub RunUpdate(oldFilePath As String, Optional knownOldVersion As String =
     If oldVersion <> "" And IsVersionGreater(MIN_COMPATIBLE_VERSION, oldVersion) Then
         Dim warnMsg As String
         warnMsg = "Achtung: Du aktualisierst von Version " & oldVersion & _
-                  ", die älter als " & MIN_COMPATIBLE_VERSION & " ist." & vbNewLine & _
-                  "Bitte prüfe nach dem Update alle Konfigurationswerte sorgfältig!" & vbNewLine & vbNewLine & _
+                  ", die " & Chr(228) & "lter als " & MIN_COMPATIBLE_VERSION & " ist." & vbNewLine & _
+                  "Bitte pr" & Chr(252) & "fe nach dem Update alle Konfigurationswerte sorgf" & Chr(228) & "ltig!" & vbNewLine & vbNewLine & _
                   "Trotzdem fortfahren?"
         If MsgBox(warnMsg, vbExclamation + vbYesNo, "Alte Version erkannt") <> vbYes Then Exit Sub
     End If
@@ -244,16 +253,16 @@ Public Sub RunUpdate(oldFilePath As String, Optional knownOldVersion As String =
     ' ---- CreateTables --------------------------------------------------
     ' Re-activate new wb — CopyConfiguration may have switched focus.
     newWb.Activate
-    Application.StatusBar = "Erstelle Tabellen in neuer Version …"
+    Application.StatusBar = "Erstelle Tabellen in neuer Version " & Chr(133)
     CreateTables
     Application.StatusBar = False
 
     ' ---- Copy ConfigW + run SelExUpdate --------------------------------
     ' ConfigW must be populated before scores are written so that the
     ' SelEx selection matrix is in place when SelExUpdate recalculates.
-    Application.StatusBar = "Kopiere Wahlaufgaben-Konfiguration …"
+    Application.StatusBar = "Kopiere Wahlaufgaben-Konfiguration " & Chr(133)
     Call CopyConfigW(oldWb, newWb)
-    SelExUpdate
+    SelExUpdate skipDialog:=True
     Application.StatusBar = False
 
     ' ---- ZK/DK rows ----------------------------------------------------
@@ -278,37 +287,12 @@ Public Sub RunUpdate(oldFilePath As String, Optional knownOldVersion As String =
     Dim savePath As String
     savePath = oldWb.Path & "\" & stem & ".xlsm"
 
-    ' If file already exists, ask whether to overwrite or pick another path
-    If Len(Dir(savePath)) > 0 Then
-        Dim overwriteMsg As String
-        overwriteMsg = "Die Datei existiert bereits:" & vbNewLine & savePath & vbNewLine & vbNewLine & _
-                       "Überschreiben?"
-        If MsgBox(overwriteMsg, vbQuestion + vbYesNo, "Datei bereits vorhanden") <> vbYes Then
-            Dim fd As FileDialog
-            Set fd = Application.FileDialog(msoFileDialogSaveAs)
-            With fd
-                .Title = "Speicherort für neue Version wählen"
-                .InitialFileName = savePath
-                .FilterIndex = 2   ' *.xlsm
-                If .Show <> -1 Then
-                    ' User cancelled — abort without saving
-                    MsgBox "Update abgebrochen. Keine Datei wurde gespeichert.", _
-                           vbInformation, "Abgebrochen"
-                    Exit Sub
-                End If
-                savePath = .SelectedItems(1)
-                ' Ensure .xlsm extension
-                If LCase(right(savePath, 5)) <> ".xlsm" Then savePath = savePath & ".xlsm"
-            End With
-        End If
-    End If
-
     newWb.SaveAs fileName:=savePath, FileFormat:=xlOpenXMLWorkbookMacroEnabled
 
     ' ---- Refresh version field on Config sheet -------------------------
     ' CheckForUpdate hits the GitHub API and writes the result (✓ / update
     ' available / error) into CfgUpdateInfo ($J$26) of ThisWorkbook (newWb).
-    Application.StatusBar = "Prüfe Versionsstand …"
+    Application.StatusBar = "Pr" & Chr(252) & "fe Versionsstand " & Chr(133)
     CheckForUpdate Version
     Application.StatusBar = False
 
@@ -316,10 +300,9 @@ Public Sub RunUpdate(oldFilePath As String, Optional knownOldVersion As String =
     finMsg = "Update abgeschlossen!" & vbNewLine & vbNewLine & _
              "Neue Version     : " & Version & vbNewLine & _
              "Neue Datei       : " & savePath & vbNewLine & vbNewLine & _
-             "Alte Datei (" & oldWb.Name & ") schließen?"
-    If MsgBox(finMsg, vbInformation + vbYesNo, "Update abgeschlossen") = vbYes Then
-        oldWb.Close SaveChanges:=False
-    End If
+             "Alte Datei (" & oldWb.Name & ") wird geschlossen!"
+    MsgBox finMsg, vbInformation, "Update abgeschlossen"
+    oldWb.Close SaveChanges:=False
 
 End Sub
 
@@ -351,7 +334,7 @@ Private Function GetLatestReleaseInfo(ByRef outTag As String, ByRef outUrl As St
     http.Send
 
     If http.Status <> 200 Then
-        MsgBox "GitHub API Fehler: " & http.Status, vbCritical, "Update-Prüfung fehlgeschlagen"
+        MsgBox "GitHub API Fehler: " & http.Status, vbCritical, "Update-Pr" & Chr(252) & "fung fehlgeschlagen"
         Exit Function
     End If
 
@@ -375,7 +358,7 @@ Private Function GetLatestReleaseInfo(ByRef outTag As String, ByRef outUrl As St
     Exit Function
 
 ApiError:
-    MsgBox "Fehler bei der Update-Prüfung: " & Err.Description, vbCritical, "Fehler"
+    MsgBox "Fehler bei der Update-Pr" & Chr(252) & "fung: " & Err.Description, vbCritical, "Fehler"
 End Function
 
 '-----------------------------------------------------------------------
@@ -598,7 +581,7 @@ Private Sub MigrateZKDK(oldWb As Workbook)
 
     ' Only add if BOTH config AND physical rows existed in old wb
     If oldHasZKConfig And oldZKPhysical Then
-        Application.StatusBar = "Füge ZK/DK-Zeilen in neuer Version ein …"
+        Application.StatusBar = "F" & Chr(252) & "ge ZK/DK-Zeilen in neuer Version ein " & Chr(133)
         AddAllZKDKRows
         Application.StatusBar = False
     End If
@@ -621,7 +604,7 @@ Private Sub CopyScores(oldWb As Workbook, newWb As Workbook)
     Dim numPupils As Integer
     numPupils = CInt(oldCfg.Range(CfgNumOfPupi).Value)
 
-    Application.StatusBar = "Kopiere Punktewerte …"
+    Application.StatusBar = "Kopiere Punktewerte " & Chr(133)
 
     Dim si As Integer
     For si = 0 To CfgMaxSheets

@@ -28,11 +28,11 @@ Public Function CheckUnblockedInteractive(filePath As String) As Boolean
         choice = MsgBox( _
             "Die heruntergeladene Datei ist durch Windows blockiert." & vbNewLine & vbNewLine & _
             "Bitte wie folgt vorgehen:" & vbNewLine & _
-            "  1. Klicke im geöffneten Explorer-Fenster mit der rechten Maustaste auf die Datei." & vbNewLine & _
-            "  2. Wähle ""Eigenschaften""." & vbNewLine & _
-            "  3. Aktiviere unten das Häkchen ""Zulassen"" (Unblock) und klicke OK." & vbNewLine & vbNewLine & _
-            "Danach hier auf Wiederholen klicken — oder Abbrechen, um den Update zu stoppen.", _
-            vbExclamation + vbRetryCancel, "Datei blockiert – Entsperren erforderlich")
+            "  1. Klicke im ge" & Chr(246) & "ffneten Explorer-Fenster mit der rechten Maustaste auf die Datei." & vbNewLine & _
+            "  2. W" & Chr(228) & "hle ""Eigenschaften""." & vbNewLine & _
+            "  3. Aktiviere unten das H" & Chr(228) & "kchen ""Zulassen"" (Unblock) und klicke OK." & vbNewLine & vbNewLine & _
+            "Danach hier auf Wiederholen klicken " & Chr(150) & " oder Abbrechen, um den Update zu stoppen.", _
+            vbExclamation + vbRetryCancel, "Datei blockiert " & Chr(150) & " Entsperren erforderlich")
         If choice = vbCancel Then
             CheckUnblockedInteractive = False
             Exit Function
@@ -51,12 +51,12 @@ Public Sub CheckUnblocked()
     If IsFileBlocked(wbPath) Then
         MsgBox "Diese Datei ist durch Windows blockiert, da sie aus dem Internet heruntergeladen wurde." & vbNewLine & vbNewLine & _
                "Bitte wie folgt vorgehen:" & vbNewLine & _
-               "  1. Schließe dieses Fenster." & vbNewLine & _
+               "  1. Schlie" & Chr(223) & "e dieses Fenster." & vbNewLine & _
                "  2. Klicke im Explorer mit der rechten Maustaste auf die Datei." & vbNewLine & _
-               "  3. Wähle " & Chr(34) & "Eigenschaften" & Chr(34) & "." & vbNewLine & _
-               "  4. Aktiviere unten das Häkchen " & Chr(34) & "Zulassen" & Chr(34) & " (Unblock)." & vbNewLine & _
-               "  5. Klicke OK und öffne die Datei erneut.", _
-               vbCritical + vbOKOnly, "Datei blockiert – Aktion erforderlich"
+               "  3. W" & Chr(228) & "hle " & Chr(34) & "Eigenschaften" & Chr(34) & "." & vbNewLine & _
+               "  4. Aktiviere unten das H" & Chr(228) & "kchen " & Chr(34) & "Zulassen" & Chr(34) & " (Unblock)." & vbNewLine & _
+               "  5. Klicke OK und " & Chr(246) & "ffne die Datei erneut.", _
+               vbCritical + vbOKOnly, "Datei blockiert " & Chr(150) & " Aktion erforderlich"
         ' Open the containing folder in Explorer so the user can right-click easily
         Shell "explorer.exe /select," & Chr(34) & wbPath & Chr(34), vbNormalFocus
         ' Close without saving

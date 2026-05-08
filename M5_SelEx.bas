@@ -291,7 +291,7 @@ Public Function AddUpdateButton(targetCell As Range, onClickMacro As String)
 End Function
 
 
-Public Function SelExUpdate()
+Public Function SelExUpdate(Optional skipDialog As Boolean = False)
 
     Call Init
 
@@ -300,10 +300,12 @@ Public Function SelExUpdate()
     actSheetName = WbNameSelExConfig
     
     ' Abfragen ob wirklich neue Tabellen erstellt werden sollen...
-    Dim Request As Integer
-    Request = MsgBox("Sicher, dass sie die Tabellen aktualisieren wollen?" & vbCrLf & "Bereits ausgefüllte Punkte können bei der Aktualisierung verloren gehen!", vbExclamation + vbOKCancel, "Sicher?")
-    If Request = vbCancel Then
-        Exit Function
+    If Not skipDialog Then
+        Dim Request As Integer
+        Request = MsgBox("Sicher, dass sie die Tabellen aktualisieren wollen?" & vbCrLf & "Bereits ausgef" & Chr(252) & "llte Punkte k" & Chr(246) & "nnen bei der Aktualisierung verloren gehen!", vbExclamation + vbOKCancel, "Sicher?")
+        If Request = vbCancel Then
+            Exit Function
+        End If
     End If
     
     Application.DisplayAlerts = False

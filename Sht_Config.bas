@@ -19,7 +19,7 @@ Private Sub cmdClearAll_Click()
     makeSure = False
     ' Abfragen ob wirklich neue Tabellen erstellt werden sollen...
     Dim Request As Integer
-    Request = MsgBox("Sicher dass Sie alles löschen wollen? Es werden ALLE Blätter, abgesehen von Config und Notenspiegel, gelöscht!", vbCritical + vbOKCancel, "Was passiert hier? O.O")
+    Request = MsgBox("Sicher dass Sie alles l" & Chr(246) & "schen wollen? Es werden ALLE Bl" & Chr(228) & "tter, abgesehen von Config und Notenspiegel, gel" & Chr(246) & "scht!", vbCritical + vbOKCancel, "Was passiert hier? O.O")
     If Request = vbCancel Then
         Exit Sub
     End If
@@ -126,7 +126,7 @@ Private Function CheckSheetNames()
     Dim result As Integer
     If Me.Name <> WbNameConfig Then
         Me.Name = WbNameConfig
-        result = MsgBox("Leider darf das Config-Sheet nicht umbenannt werden! :-(", vbInformation + vbOKOnly, "Böse!")
+        result = MsgBox("Leider darf das Config-Sheet nicht umbenannt werden! :-(", vbInformation + vbOKOnly, "B" & Chr(246) & "se!")
     End If
 End Function
 
