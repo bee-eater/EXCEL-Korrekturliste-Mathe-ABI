@@ -240,16 +240,20 @@ Function CheckForUpdate(currentVersion As String)
         If IsVersionGreater(latestVersion, Version) Then
             ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Update available! " + Version + " " + ChrW(8594) + " " + latestVersion
             ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 138, 255) ' Blue
+            ThisWorkbook.Sheets(WbNameConfig).OLEObjects("cmdUpdate").Visible = True
         ElseIf IsVersionGreater(Version, latestVersion) Then
             ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Pre-Release! " + Version
             ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(175, 80, 0) ' Orange
+            ThisWorkbook.Sheets(WbNameConfig).OLEObjects("cmdUpdate").Visible = False
         Else
             ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = ChrW(10003) + " " + Version
             ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(0, 176, 80) ' Green
+            ThisWorkbook.Sheets(WbNameConfig).OLEObjects("cmdUpdate").Visible = False
         End If
     Else
         ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = http.Status
         ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
+        ThisWorkbook.Sheets(WbNameConfig).OLEObjects("cmdUpdate").Visible = False
     End If
     
     Worksheets(WbNameConfig).Protect Password:=WbPw
@@ -262,6 +266,7 @@ UpdateCheckError:
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
     ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Value = "Error checking for updates..."
     ThisWorkbook.Sheets(WbNameConfig).Range(CfgUpdateInfo).Font.color = RGB(255, 0, 0) ' Red for error
+    ThisWorkbook.Sheets(WbNameConfig).OLEObjects("cmdUpdate").Visible = False
     Worksheets(WbNameConfig).Protect Password:=WbPw
     Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
     

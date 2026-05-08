@@ -94,6 +94,10 @@ Private Sub cmdAK_Click()
     Call ShowAll
 End Sub
 
+Private Sub cmdUpdate_Click()
+    Call UpdateFromDownload
+End Sub
+
 '----------------------------------------
 ' EIGENEN NAMEN PRÜFEN
 '----------------------------------------

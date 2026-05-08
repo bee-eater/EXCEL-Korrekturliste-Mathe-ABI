@@ -453,8 +453,10 @@ Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As 
                 lbl = ws.Cells(r, CfgColStart + 1).Value
                 If lbl = "ZK" Then
                     ws.Rows(r).Hidden = hideZK
+                    If Not hideZK Then ws.Rows(r).Font.ColorIndex = xlAutomatic
                 ElseIf lbl = "DK" Then
                     ws.Rows(r).Hidden = hideDK
+                    If Not hideDK Then ws.Rows(r).Font.ColorIndex = xlAutomatic
                 ElseIf lbl <> "" Then
                     ' Main pupil row: ensure own top border is always present (visible when ZK/DK above are hidden)
                     ' First pupil row keeps xlMedium (it is the block's outer top edge); inner rows use xlThin

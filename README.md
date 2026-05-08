@@ -12,9 +12,9 @@ Excel-Tabelle als Korrekturhilfe des bayerischen Mathe-Abis.
 
 ## Download
 
-Latest stable: [v2.1.0](https://github.com/bee-eater/EXCEL-Korrekturliste-Mathe-ABI/releases/download/v2.1.0/Korrekturliste.xlsm)
+Latest stable: [v2.2.0](https://github.com/bee-eater/EXCEL-Korrekturliste-Mathe-ABI/releases/download/v2.2.0/Korrekturliste.xlsm)
 
-Latest beta: [v2.2.0-beta4](https://raw.githubusercontent.com/bee-eater/EXCEL-Korrekturliste-Mathe-ABI/v2.2.0-beta4/Korrekturliste.xlsm)
+Latest beta: <N/A>
 
 ## Makros werden nicht aktiviert
 
