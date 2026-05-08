@@ -1,26 +1,6 @@
 Attribute VB_Name = "M9_Helper"
 Option Explicit
 
-' Sourcecode exportieren für Versionsverwaltung
-Public Function ExportSourceFiles()
-    Dim destPath As String
-    destPath = Application.ActiveWorkbook.Path & "\"
-    Dim component As VBComponent
-    For Each component In Application.VBE.ActiveVBProject.VBComponents
-        If (component.Type = vbext_ct_ClassModule Or component.Type = vbext_ct_StdModule) And component.Name <> "JsonConverter" Then
-            component.Export destPath & component.Name & ToFileExtension(component.Type)
-        ElseIf component.Type = vbext_ct_Document Then
-            ' Export ThisWorkbook and the Config sheet code module
-            If component.Name = "DieseArbeitsmappe" Then
-                component.Export destPath & component.Name & ".bas"
-            ElseIf component.Name = WbNameConfig Or component.Name = WbNameGradeKey Then
-                component.Export destPath & "Sht_" & component.Name & ".bas"
-            End If
-        End If
-    Next
-
-End Function
-
 Function WSExists(n As String) As Boolean
   Dim ws As Worksheet
   WSExists = False
@@ -42,45 +22,6 @@ Public Function GetNumOfSubEx(sheetName As String) As Integer
         End If
     Next i
     GetNumOfSubEx = 0
-End Function
-
-Public Function IsVBProjectAccessible() As Boolean
-    On Error Resume Next
-    Dim test As Object
-    Set test = ThisWorkbook.VBProject.VBComponents
-    IsVBProjectAccessible = (Err.Number = 0)
-    On Error GoTo 0
-End Function
-
-Public Function EnsureVBAccess()
-    
-    If Not IsVBProjectAccessible() Then
-        MsgBox "Bitte aktiviere 'Zugriff auf das VBA-Projektmodell vertrauen':" & vbCrLf & _
-               "Datei > Optionen > Trust Center > Einstellungen für das Trust Center > Makroeinstellungen", _
-               vbExclamation, "Access Required"
-        EnsureVBAccess = False
-        Exit Function
-    End If
-    EnsureVBAccess = True
-    
-End Function
-
-Private Function ToFileExtension(vbeComponentType As vbext_ComponentType) As String
-    
-    ' Dateiendung entsprechend Typ zurückgeben
-    Select Case vbeComponentType
-        Case vbext_ComponentType.vbext_ct_ClassModule
-            ToFileExtension = ".cls"
-        Case vbext_ComponentType.vbext_ct_StdModule
-            ToFileExtension = ".bas"
-        Case vbext_ComponentType.vbext_ct_MSForm
-            ToFileExtension = ".frm"
-        Case vbext_ComponentType.vbext_ct_ActiveXDesigner
-        Case vbext_ComponentType.vbext_ct_Document
-        Case Else
-            ToFileExtension = vbNullString
-    End Select
-
 End Function
 
 Public Function ceil(ByVal X As Double, Optional ByVal Factor As Double = 1) As Double

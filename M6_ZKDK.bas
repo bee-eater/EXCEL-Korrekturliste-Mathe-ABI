@@ -738,7 +738,7 @@ Private Sub ImportZKDKFromFile(targetLabel As String)
         End If
     Next owb
     If Not alreadyOpen Then
-        Set srcWb = Workbooks.Open(Filename:=CStr(srcPath), ReadOnly:=True, UpdateLinks:=False)
+        Set srcWb = Workbooks.Open(fileName:=CStr(srcPath), ReadOnly:=True, UpdateLinks:=False)
     End If
     ' Restore ThisWorkbook as active — Workbooks.Open shifts focus to the new file,
     ' causing all unqualified Worksheets() calls below to resolve against srcWb.
