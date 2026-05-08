@@ -72,6 +72,13 @@ Public Sub UpdateFromDownload()
     End If
     Application.StatusBar = False
 
+    ' Ensure the downloaded file is not blocked by Windows before opening it.
+    If Not CheckUnblockedInteractive(newFilePath) Then
+        MsgBox "Update abgebrochen. Bitte die Datei manuell entsperren und erneut versuchen.", _
+               vbInformation, "Update abgebrochen"
+        Exit Sub
+    End If
+
     ' Open the new workbook and hand off ALL migration logic to it.
     ' RunUpdate runs in the new workbook's context; we pass our own full
     ' path and current version so the new code knows where to pull data from.

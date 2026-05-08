@@ -1,6 +1,90 @@
 Attribute VB_Name = "M9_Helper"
 Option Explicit
 
+'-----------------------------------------------------
+' UNBLOCK CHECK
+'-----------------------------------------------------
+
+' Returns True if the workbook file has the Windows Zone.Identifier NTFS stream,
+' which means it was downloaded and not yet unblocked by the user.
+Public Function IsFileBlocked(filePath As String) As Boolean
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    ' Zone.Identifier is an NTFS alternate data stream appended by Windows
+    ' after downloading a file from the internet.
+    IsFileBlocked = fso.FileExists(filePath & ":Zone.Identifier")
+End Function
+
+' Checks whether a given downloaded file is still blocked by Windows.
+' Shows a dialog with step-by-step instructions and opens the folder in Explorer.
+' Loops until the user has unblocked the file (Retry) or aborts (Cancel).
+' Returns True if the file is ready to open, False if the user aborted.
+Public Function CheckUnblockedInteractive(filePath As String) As Boolean
+    Dim folderPath As String
+    folderPath = Left(filePath, InStrRev(filePath, "\"))
+    Do While IsFileBlocked(filePath)
+        Shell "explorer.exe """ & folderPath & """", vbNormalFocus
+        Dim choice As VbMsgBoxResult
+        choice = MsgBox( _
+            "Die heruntergeladene Datei ist durch Windows blockiert." & vbNewLine & vbNewLine & _
+            "Bitte wie folgt vorgehen:" & vbNewLine & _
+            "  1. Klicke im geöffneten Explorer-Fenster mit der rechten Maustaste auf die Datei." & vbNewLine & _
+            "  2. Wähle ""Eigenschaften""." & vbNewLine & _
+            "  3. Aktiviere unten das Häkchen ""Zulassen"" (Unblock) und klicke OK." & vbNewLine & vbNewLine & _
+            "Danach hier auf Wiederholen klicken — oder Abbrechen, um den Update zu stoppen.", _
+            vbExclamation + vbRetryCancel, "Datei blockiert – Entsperren erforderlich")
+        If choice = vbCancel Then
+            CheckUnblockedInteractive = False
+            Exit Function
+        End If
+        ' vbRetry -> re-check the stream
+    Loop
+    CheckUnblockedInteractive = True
+End Function
+
+' Checks whether the workbook itself is blocked. If it is, shows a message,
+' opens the containing folder in Explorer so the user can unblock it,
+' and closes the workbook without saving.
+Public Sub CheckUnblocked()
+    Dim wbPath As String
+    wbPath = ThisWorkbook.FullName
+    If IsFileBlocked(wbPath) Then
+        MsgBox "Diese Datei ist durch Windows blockiert, da sie aus dem Internet heruntergeladen wurde." & vbNewLine & vbNewLine & _
+               "Bitte wie folgt vorgehen:" & vbNewLine & _
+               "  1. Schließe dieses Fenster." & vbNewLine & _
+               "  2. Klicke im Explorer mit der rechten Maustaste auf die Datei." & vbNewLine & _
+               "  3. Wähle " & Chr(34) & "Eigenschaften" & Chr(34) & "." & vbNewLine & _
+               "  4. Aktiviere unten das Häkchen " & Chr(34) & "Zulassen" & Chr(34) & " (Unblock)." & vbNewLine & _
+               "  5. Klicke OK und öffne die Datei erneut.", _
+               vbCritical + vbOKOnly, "Datei blockiert – Aktion erforderlich"
+        ' Open the containing folder in Explorer so the user can right-click easily
+        Shell "explorer.exe /select," & Chr(34) & wbPath & Chr(34), vbNormalFocus
+        ' Close without saving
+        ThisWorkbook.Close SaveChanges:=False
+    End If
+End Sub
+
+' Shows cmdUpdateFile on the Config sheet when no segment sheets exist yet
+' (i.e. the workbook is fresh / empty), hides it otherwise.
+Public Sub RefreshUpdateFileButton()
+    Dim ws As Worksheet
+    Dim systemSheets As String
+    systemSheets = "|" & WbNameConfig & "|" & WbNameGradeKey & "|" & WbNameGradeSheet & _
+                   "|" & WbNamePrintSheet & "|" & WbNameSelExConfig & "|" & WbNameTestDaten & "|"
+    Dim hasSegment As Boolean
+    hasSegment = False
+    For Each ws In ThisWorkbook.Worksheets
+        If InStr(systemSheets, "|" & ws.Name & "|") = 0 Then
+            hasSegment = True
+            Exit For
+        End If
+    Next ws
+    Worksheets(WbNameConfig).Unprotect Password:=WbPw
+    Worksheets(WbNameConfig).OLEObjects("cmdUpdateFile").Visible = Not hasSegment
+    Worksheets(WbNameConfig).Protect Password:=WbPw
+    Worksheets(WbNameConfig).EnableSelection = xlUnlockedCells
+End Sub
+
 Function WSExists(n As String) As Boolean
   Dim ws As Worksheet
   WSExists = False

@@ -98,6 +98,10 @@ Private Sub cmdUpdate_Click()
     Call UpdateFromDownload
 End Sub
 
+Private Sub cmdUpdateFile_Click()
+    Call UpdateFromFile
+End Sub
+
 '----------------------------------------
 ' EIGENEN NAMEN PRÜFEN
 '----------------------------------------
@@ -115,6 +119,7 @@ End Sub
 
 Private Sub Worksheet_Activate()
     Call CheckSheetNames
+    Call RefreshUpdateFileButton
 End Sub
 
 Private Function CheckSheetNames()
