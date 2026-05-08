@@ -243,7 +243,7 @@ End Function
 Public Function InjectWorksheet_ButtonHandler(ws As Worksheet)
 
     Dim codeModule As Object
-    Set codeModule = ws.Parent.VBProject _
+    Set codeModule = ws.parent.VBProject _
         .VBComponents(ws.CodeName).codeModule
 
     On Error Resume Next

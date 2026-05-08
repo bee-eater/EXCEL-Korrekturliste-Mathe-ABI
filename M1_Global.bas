@@ -122,4 +122,8 @@ Public Function Init()
     
 End Function
 
-
+' Called by M8_Update in a NEWER workbook via Application.Run to read
+' the version of THIS (older) workbook without needing to parse any cells.
+Public Function GetVersion() As String
+    GetVersion = Version
+End Function
