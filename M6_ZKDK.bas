@@ -357,29 +357,61 @@ End Sub
 
 ' EK view: hide all ZK and DK rows (show only main pupil rows).
 Public Sub ShowEK()
+    If Not ZKRowsExistOnAnySheet() Then Exit Sub
     Call SetZKDKVisibility(hideZK:=True, hideDK:=True, lockMain:=False)
 End Sub
 
 ' ZK view: hide DK rows only (show main + ZK rows).
 Public Sub ShowZK()
-    If Not Len(Trim(Worksheets(WbNameConfig).Range(CfgZK).Value)) > 0 Then Exit Sub
+    If Not ZKRowsExistOnAnySheet() Then Exit Sub
     Call SetZKDKVisibility(hideZK:=False, hideDK:=True, lockMain:=True)
 End Sub
 
 ' DK view: hide ZK rows only (show main + DK rows).
 Public Sub ShowDK()
-    Dim hasZK As Boolean, hasDK As Boolean
-    hasZK = Len(Trim(Worksheets(WbNameConfig).Range(CfgZK).Value)) > 0
-    hasDK = hasZK And Len(Trim(Worksheets(WbNameConfig).Range(CfgDK).Value)) > 0
-    If Not hasDK Then Exit Sub
+    If Not DKRowsExistOnAnySheet() Then Exit Sub
     Call SetZKDKVisibility(hideZK:=True, hideDK:=False, lockMain:=True)
 End Sub
 
 ' All view: show all rows (unhide ZK and DK).
 Public Sub ShowAll()
-    If Not Len(Trim(Worksheets(WbNameConfig).Range(CfgZK).Value)) > 0 Then Exit Sub
+    If Not ZKRowsExistOnAnySheet() Then Exit Sub
     Call SetZKDKVisibility(hideZK:=False, hideDK:=False, lockMain:=False)
 End Sub
+
+' Returns True if at least one segment sheet has physically inserted ZK rows.
+Private Function ZKRowsExistOnAnySheet() As Boolean
+    Dim si As Integer
+    For si = 0 To CfgMaxSheets
+        Dim sName As String
+        sName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, si * 2).Value
+        If sName = "" Then Exit For
+        If WSExists(sName) Then
+            If SheetStride(Worksheets(sName)) >= 2 Then
+                ZKRowsExistOnAnySheet = True
+                Exit Function
+            End If
+        End If
+    Next si
+    ZKRowsExistOnAnySheet = False
+End Function
+
+' Returns True if at least one segment sheet has physically inserted DK rows.
+Private Function DKRowsExistOnAnySheet() As Boolean
+    Dim si As Integer
+    For si = 0 To CfgMaxSheets
+        Dim sName As String
+        sName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, si * 2).Value
+        If sName = "" Then Exit For
+        If WSExists(sName) Then
+            If SheetStride(Worksheets(sName)) >= 3 Then
+                DKRowsExistOnAnySheet = True
+                Exit Function
+            End If
+        End If
+    Next si
+    DKRowsExistOnAnySheet = False
+End Function
 
 Private Sub SetZKDKVisibility(hideZK As Boolean, hideDK As Boolean, lockMain As Boolean)
 
