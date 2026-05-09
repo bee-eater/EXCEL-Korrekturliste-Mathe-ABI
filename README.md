@@ -1,6 +1,12 @@
-# Info
+# EXCEL Korrekturliste
 
-Excel-Tabelle als Korrekturhilfe des bayerischen Mathe-Abis.
+> Vorschläge für v2.3.0 werden gerne entgegengenommen!
+> Entweder direkt ein Issue erstellen oder per Mail! an info(xx)aut-ex.de <-- (xx) durch @ ersetzen, Spam-Schutz!
+
+## Beschreibung
+
+
+Excel-Tabelle als Korrekturhilfe des bayerischen Mathe-Abis. Ggf. natürlich auch für andere Korrekturen oder Bundesländer geeignet, einfach ausprobieren!
 
 - Einfaches Anlegen der Korrekturtabellen
 - Konfigurationsseite für Schülernamen und Aufgaben
@@ -15,6 +21,8 @@ Excel-Tabelle als Korrekturhilfe des bayerischen Mathe-Abis.
 Latest stable: [v2.2.0](https://github.com/bee-eater/EXCEL-Korrekturliste-Mathe-ABI/releases/download/v2.2.0/Korrekturliste.xlsm)
 
 Latest beta: <N/A>
+
+Latest dev: [v2.3.0-dev](https://raw.githubusercontent.com/bee-eater/EXCEL-Korrekturliste-Mathe-ABI/feature/update/Korrekturliste.xlsm)
 
 ## Makros werden nicht aktiviert
 
