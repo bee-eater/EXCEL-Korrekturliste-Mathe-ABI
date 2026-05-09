@@ -6,7 +6,7 @@ Option Explicit
 '-----------------------------------------------------
 Public Const DevMode = 0
 Public Const WbPw = ""
-Public Const Version = "v2.2.0"
+Public Const Version = "v2.3.0"
 
 Public Const WbNameConfig = "Config"
 Public Const WbNameSelExConfig = "ConfigW"

@@ -201,15 +201,6 @@ Public Sub RunUpdate(oldFilePath As String, Optional knownOldVersion As String =
         Exit Sub
     End If
 
-    ' ---- Backup old workbook -------------------------------------------
-    ' Save a copy of the old file as <name>.bak.xlsm next to the original.
-    Dim bakPath As String
-    bakPath = Left(oldFilePath, Len(oldFilePath) - 5) & ".bak.xlsm"
-    On Error Resume Next
-    Kill bakPath          ' delete existing backup silently
-    On Error GoTo 0
-    oldWb.SaveCopyAs bakPath
-
     ' ---- Determine old version -----------------------------------------
     Dim oldVersion As String
     If knownOldVersion <> "" Then
@@ -280,14 +271,7 @@ Public Sub RunUpdate(oldFilePath As String, Optional knownOldVersion As String =
     Application.EnableEvents = True
     Application.ScreenUpdating = True
 
-    ' Default save path: old workbook's folder, new workbook's filename
-    Dim stem As String
-    stem = left(newWb.Name, Len(newWb.Name) - 5)   ' strip .xlsm
-
-    Dim savePath As String
-    savePath = oldWb.Path & "\" & stem & ".xlsm"
-
-    newWb.SaveAs fileName:=savePath, FileFormat:=xlOpenXMLWorkbookMacroEnabled
+    newWb.Save
 
     ' ---- Refresh version field on Config sheet -------------------------
     ' CheckForUpdate hits the GitHub API and writes the result (✓ / update
@@ -299,7 +283,7 @@ Public Sub RunUpdate(oldFilePath As String, Optional knownOldVersion As String =
     Dim finMsg As String
     finMsg = "Update abgeschlossen!" & vbNewLine & vbNewLine & _
              "Neue Version     : " & Version & vbNewLine & _
-             "Neue Datei       : " & savePath & vbNewLine & vbNewLine & _
+             "Gespeichert als  : " & newWb.FullName & vbNewLine & vbNewLine & _
              "Alte Datei (" & oldWb.Name & ") wird geschlossen!"
     MsgBox finMsg, vbInformation, "Update abgeschlossen"
     oldWb.Close SaveChanges:=False
@@ -483,59 +467,74 @@ Private Sub CopyConfiguration(oldWb As Workbook, newWb As Workbook)
 
     newCfg.Unprotect Password:=WbPw
 
-    ' --- Scalar config cells (layout must be stable across versions) ----
-    Dim scalarRanges As Variant
-    scalarRanges = Array( _
-        CfgAbiTitle, CfgAbiDate, CfgAbiTeacher, CfgAbiClass, _
-        CfgZK, CfgDK, CfgNumOfPupi, _
-        CfgOptNavAfterIns, CfgOptNavAfterDel _
-    )
-    Dim rng As Variant
-    For Each rng In scalarRanges
-        On Error Resume Next
-        newCfg.Range(rng).Value = oldCfg.Range(rng).Value
-        On Error GoTo 0
-    Next rng
+    ' Helper: copy a rectangular block from oldCfg -> newCfg, skipping
+    ' any destination cell that is Locked (formula / computed value).
+    Dim r As Long, c As Long
 
-    ' --- Pupils (index + first name + last name columns, up to 50 rows) -
-    Dim pupiFirstRow As Long
-    pupiFirstRow = oldCfg.Range(CfgFirstPupi).row
-    Dim pupiCols As Long
-    pupiCols = 3   ' index, first, last
+    ' --- Block 1: Segment config  F6:S20 --------------------------------
+    ' Covers section names (row 4), task headers (rows 5-20), SelEx flags.
+    ' Derived from CfgFirstSect ($F$4): cols F..S, rows 6..20.
+    Dim segCol1 As Long, segCol2 As Long, segRow1 As Long, segRow2 As Long
+    segCol1 = oldCfg.Range(CfgFirstSect).Column                    ' F = 6
+    segCol2 = segCol1 + (CfgMaxSheets + 1) * 2 - 1                 ' S = 19
+    segRow1 = oldCfg.Range(CfgFirstSect).Row                       ' row 4
+    segRow2 = oldCfg.Range(CfgExerCount).Row - 1                   ' row 20
+    For r = segRow1 To segRow2
+        For c = segCol1 To segCol2
+            If Not newCfg.Cells(r, c).Locked Then
+                On Error Resume Next
+                newCfg.Cells(r, c).Value = oldCfg.Cells(r, c).Value
+                On Error GoTo 0
+            End If
+        Next c
+    Next r
 
-    Dim numPupils As Integer
-    numPupils = CInt(oldCfg.Range(CfgNumOfPupi).Value)
-    If numPupils > 0 Then
-        newCfg.Range( _
-            newCfg.Cells(pupiFirstRow, oldCfg.Range(CfgFirstPupi).Column), _
-            newCfg.Cells(pupiFirstRow + numPupils - 1, oldCfg.Range(CfgFirstPupi).Column + pupiCols - 1) _
-        ).Value = oldCfg.Range( _
-            oldCfg.Cells(pupiFirstRow, oldCfg.Range(CfgFirstPupi).Column), _
-            oldCfg.Cells(pupiFirstRow + numPupils - 1, oldCfg.Range(CfgFirstPupi).Column + pupiCols - 1) _
-        ).Value
-    End If
+    ' --- Block 2: Pupils  C5:D44 ----------------------------------------
+    ' First name + last name columns; index col (B) is auto-generated.
+    ' Derived from CfgFirstPupi ($B$5): cols C..D, rows 5..44.
+    Dim pupiCol1 As Long, pupiCol2 As Long, pupiRow1 As Long, pupiRow2 As Long
+    pupiCol1 = oldCfg.Range(CfgFirstPupi).Column + 1               ' C = 3
+    pupiCol2 = oldCfg.Range(CfgFirstPupi).Column + 2               ' D = 4
+    pupiRow1 = oldCfg.Range(CfgFirstPupi).Row                      ' row 5
+    pupiRow2 = oldCfg.Range(CfgNumOfPupi).Row - 1                  ' row 44
+    For r = pupiRow1 To pupiRow2
+        For c = pupiCol1 To pupiCol2
+            If Not newCfg.Cells(r, c).Locked Then
+                On Error Resume Next
+                newCfg.Cells(r, c).Value = oldCfg.Cells(r, c).Value
+                On Error GoTo 0
+            End If
+        Next c
+    Next r
 
-    ' --- Segment configuration (name, exercise count, SelEx flag, task names)
-    ' CfgFirstSect points to the base cell; each segment occupies 2 columns.
-    Dim sectBaseCol As Long
-    sectBaseCol = oldCfg.Range(CfgFirstSect).Column
-    Dim sectBaseRow As Long
-    sectBaseRow = oldCfg.Range(CfgFirstSect).row
+    ' --- Block 3: Settings  G25:G28 -------------------------------------
+    ' Teacher, class, ZK, DK.
+    ' Derived from CfgAbiTeacher ($G$25) .. CfgDK ($G$28).
+    Dim setCol As Long, setRow1 As Long, setRow2 As Long
+    setCol  = oldCfg.Range(CfgAbiTeacher).Column                   ' G = 7
+    setRow1 = oldCfg.Range(CfgAbiTeacher).Row                      ' row 25
+    setRow2 = oldCfg.Range(CfgDK).Row                              ' row 28
+    For r = setRow1 To setRow2
+        If Not newCfg.Cells(r, setCol).Locked Then
+            On Error Resume Next
+            newCfg.Cells(r, setCol).Value = oldCfg.Cells(r, setCol).Value
+            On Error GoTo 0
+        End If
+    Next r
 
-    ' Copy entire segment config block in one shot:
-    ' 25 rows × (CfgMaxSheets+1)*2 columns covers all section names,
-    ' task headers, exercise counts and SelEx flags.
-    Dim totalSegCols As Long
-    totalSegCols = (CfgMaxSheets + 1) * 2
-    On Error Resume Next
-    newCfg.Range( _
-        newCfg.Cells(sectBaseRow, sectBaseCol), _
-        newCfg.Cells(sectBaseRow + 24, sectBaseCol + totalSegCols - 1) _
-    ).Value = oldCfg.Range( _
-        oldCfg.Cells(sectBaseRow, sectBaseCol), _
-        oldCfg.Cells(sectBaseRow + 24, sectBaseCol + totalSegCols - 1) _
-    ).Value
-    On Error GoTo 0
+    ' --- Single-cell scalars not covered by the blocks above ------------
+    ' Title (F2), Date (G24), pupil count (C45), nav options (V40:V41).
+    Dim singles As Variant
+    singles = Array(CfgAbiTitle, CfgAbiDate, CfgNumOfPupi, _
+                    CfgOptNavAfterIns, CfgOptNavAfterDel)
+    Dim nm As Variant
+    For Each nm In singles
+        If Not newCfg.Range(nm).Locked Then
+            On Error Resume Next
+            newCfg.Range(nm).Value = oldCfg.Range(nm).Value
+            On Error GoTo 0
+        End If
+    Next nm
 
     If DevMode <> 1 Then
         newCfg.Protect Password:=WbPw
