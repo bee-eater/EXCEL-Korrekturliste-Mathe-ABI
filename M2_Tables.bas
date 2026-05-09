@@ -99,13 +99,12 @@ Private Function PaintSegmentPages()
 
         ' Set name for further processing
         actSheetName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, actSheet * 2).Value
-        If actSheetName = "" Then
-            Exit Function
-        End If
+        If actSheetName = "" Then GoTo NextSegPaint
 
-        '------------------------------------
-        ' Delete old sheet if exists
-        '------------------------------------
+        ' Skip segments with no exercises configured
+        Dim numOfSubExChk As Integer
+        numOfSubExChk = Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, actSheet * 2).Value
+        If numOfSubExChk = 0 Then GoTo NextSegPaint
         If WSExists(actSheetName) Then
             Worksheets(actSheetName).Delete
         End If
@@ -234,6 +233,7 @@ Private Function PaintSegmentPages()
         ' Define PupilBlock named range (replaces the AddZKDKRows call)
         Call DefinePupilBlockName(ws, numOfSubEx, gNumOfPupils)
 
+NextSegPaint:
     Next actSheet
 
 End Function
@@ -293,11 +293,10 @@ Private Function FillSegmentPages()
 
         ' Set name for further processing
         actSheetName = wsCfg.Range(CfgFirstSect).offset(0, actSheet * 2).Value
-        If actSheetName = "" Then
-            Exit Function
-        End If
-        Set ws = Worksheets(actSheetName)
+        If actSheetName = "" Then GoTo NextSegFill
         numOfSubEx = wsCfg.Range(CfgExerCount).offset(0, actSheet * 2).Value
+        If numOfSubEx = 0 Then GoTo NextSegFill
+        Set ws = Worksheets(actSheetName)
         span = numOfSubEx + 2 ' Anzahl der Teilaufgaben + 3 Spalten (Index,Name,Summe)
 
         colSectEx = ColLetter(cfgFirstSectCol + actSheet * 2)
@@ -350,6 +349,7 @@ Private Function FillSegmentPages()
 
         FillSegmentPages_WriteSubPercentagFormulas ws, numOfSubEx
 
+NextSegFill:
     Next actSheet
 
 End Function
