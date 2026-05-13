@@ -145,6 +145,73 @@ Public Sub setBorder(rng As Range, merge As Boolean, left As Boolean, right As B
     End With
 End Sub
 
+' Applies landscape + fit-to-one-page to every sheet that hasn't been handled by
+' SetSegmentPrintArea / SetConfigPrintArea (e.g. Notenspiegel, Noten).
+' Must be called AFTER all specific print-area setters so it doesn't overwrite
+' custom print areas; it only touches orientation and scaling, not PrintArea.
+Public Sub ApplyLandscapeFitAllSheets()
+    Dim ws As Worksheet
+    For Each ws In ThisWorkbook.Worksheets
+        If ws.Name = WbNamePrintSheet Then GoTo NextSheet
+        ws.PageSetup.Orientation = xlLandscape
+        Application.PrintCommunication = False
+        With ws.PageSetup
+            .Zoom = False
+            .FitToPagesWide = 1
+            .FitToPagesTall = 1
+        End With
+        Application.PrintCommunication = True
+NextSheet:
+    Next ws
+End Sub
+
+' Sets the print area on the Config sheet to columns B:S only (trimming helper columns).
+Public Sub SetConfigPrintArea()
+    Dim ws As Worksheet
+    Set ws = Worksheets(WbNameConfig)
+    ' Find the last used row within columns B:S dynamically
+    Dim lastRow As Long
+    Dim found As Range
+    Set found = ws.Range("B:S").Find(What:="*", SearchOrder:=xlByRows, SearchDirection:=xlPrevious)
+    If Not found Is Nothing Then
+        lastRow = found.Row
+    Else
+        lastRow = 45  ' fallback
+    End If
+    ws.PageSetup.Orientation = xlLandscape
+    Application.PrintCommunication = False
+    With ws.PageSetup
+        .PrintArea = ws.Range(ws.Cells(1, 2), ws.Cells(lastRow, 19)).Address
+        .Zoom = False
+        .FitToPagesWide = 1
+        .FitToPagesTall = 1
+    End With
+    Application.PrintCommunication = True
+End Sub
+
+' Sets the print area on a segment sheet to cover only the table (header rows through
+' the percentage row), trimming the grey background from the printout.
+' Uses SheetStride() to account for ZK/DK rows that may have been inserted.
+Public Sub SetSegmentPrintArea(ws As Worksheet, numOfSubEx As Integer)
+    Dim stride As Integer
+    stride = SheetStride(ws)
+    Dim span As Integer
+    span = numOfSubEx + 2
+    Dim lastRow As Long
+    lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * stride
+    ws.PageSetup.Orientation = xlLandscape
+    Application.PrintCommunication = False
+    With ws.PageSetup
+        .PrintArea = ws.Range( _
+            ws.Cells(CfgRowStart, CfgColStart), _
+            ws.Cells(lastRow, CfgColStart + span)).Address
+        .Zoom = False
+        .FitToPagesWide = 1
+        .FitToPagesTall = 1
+    End With
+    Application.PrintCommunication = True
+End Sub
+
 ' Applies decimal validation (0..refCell) directly to rng — no .Select required.
 Public Sub setUpperLimit(rng As Range, refCell As String)
     With rng.Validation

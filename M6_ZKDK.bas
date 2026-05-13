@@ -181,6 +181,8 @@ SkipInsert:
 
     ' Always define/redefine sheet-scoped PupilBlock named range
     Call DefinePupilBlockName(ws, numOfSubEx, gNumOfPupils * stride)
+    ' Update print area to include ZK/DK rows
+    Call SetSegmentPrintArea(ws, numOfSubEx)
 
 End Sub
 
@@ -348,6 +350,8 @@ Public Sub RemoveZKDKRows(ws As Worksheet, numOfSubEx As Integer)
 
     ' show all to update borders and avoid hidden empty rows if config is later changed to add ZK/DK again
     Call ShowAll
+    ' Restore print area to pupils-only extent (ZK/DK rows removed)
+    Call SetSegmentPrintArea(ws, numOfSubEx)
 
 End Sub
 
@@ -679,6 +683,9 @@ Public Sub AddAllZKDKRows()
     ' Re-apply SelEx crosses to all newly added ZK/DK rows
     If CheckForSelEx() Then Call ApplySelExCrosses
 
+    ' Add ZK/DK summary rows to the grade sheet
+    Call AddZKDKRowsGradePage
+
     Application.DisplayAlerts = True
     Application.EnableEvents = True
     Application.ScreenUpdating = True
@@ -728,10 +735,304 @@ Public Sub RemoveAllZKDKRows()
 
     Worksheets(WbNameConfig).Activate
 
+    ' Remove ZK/DK summary rows from the grade sheet
+    Call RemoveZKDKRowsGradePage
+
     Application.DisplayAlerts = True
     Application.EnableEvents = True
     Application.ScreenUpdating = True
     Application.Calculation = xlCalculationAutomatic
+
+End Sub
+
+'-----------------------------------------------------
+' ZK / DK ROWS ON GRADE PAGE
+'-----------------------------------------------------
+
+' Inserts and fills ZK/DK summary rows on the grade sheet, mirroring segment pages.
+' Must be called AFTER AddAllZKDKRows so the segment sheets already have ZK/DK rows.
+Public Sub AddZKDKRowsGradePage()
+
+    If Not WSExists(WbNameGradeSheet) Then Exit Sub
+
+    Dim zkName As String, dkName As String
+    zkName = Trim(Worksheets(WbNameConfig).Range(CfgZK).Value)
+    dkName = Trim(Worksheets(WbNameConfig).Range(CfgDK).Value)
+
+    Dim hasZK As Boolean, hasDK As Boolean
+    hasZK = (Len(zkName) > 0)
+    hasDK = hasZK And (Len(dkName) > 0)
+    If Not hasZK Then Exit Sub
+
+    Dim ws As Worksheet
+    Set ws = Worksheets(WbNameGradeSheet)
+    ws.Unprotect Password:=WbPw
+
+    Dim sheetCnt As Integer
+    sheetCnt = CountSegmentSheets()
+    ' Last visible column on grade page: grade column
+    Dim gradeEnd As Long
+    gradeEnd = CfgColStart + sheetCnt + 4  ' = CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2
+
+    ' Detect what is already present
+    Dim zkPresent As Boolean, dkPresent As Boolean
+    zkPresent = False
+    dkPresent = False
+    Dim chkRow As Long
+    For chkRow = CfgRowStart + CfgRowOffsetFirstPupil To CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
+        Dim chkLbl As String
+        chkLbl = ws.Cells(chkRow, CfgColStart + 1).Value
+        If chkLbl = "ZK" Then zkPresent = True
+        If chkLbl = "DK" Then dkPresent = True
+    Next chkRow
+
+    If zkPresent And (Not hasDK Or dkPresent) Then GoTo DoneGrade
+
+    ' Stride that segment sheets now use (already updated)
+    Dim segStride As Integer
+    segStride = PupilStride()
+
+    Dim i As Integer
+
+    If Not zkPresent Then
+        ' Insert ZK (and DK) rows bottom-up, same pattern as segment pages
+        For i = gNumOfPupils - 1 To 0 Step -1
+            Dim pupPhysRow As Long
+            pupPhysRow = CfgRowStart + CfgRowOffsetFirstPupil + i
+            Dim rowClr As Long
+            If i Mod 2 = 0 Then rowClr = gClrTheme2 Else rowClr = gClrTheme2a
+
+            If hasDK Then
+                ws.Rows(pupPhysRow + 1).Insert Shift:=xlDown
+                Call FormatGradeZKDKRow(ws, pupPhysRow + 1, sheetCnt, "DK", rowClr, False)
+            End If
+            ws.Rows(pupPhysRow + 1).Insert Shift:=xlDown
+            Call FormatGradeZKDKRow(ws, pupPhysRow + 1, sheetCnt, "ZK", rowClr, hasDK)
+
+            ' Soften the pupil row's bottom border (subtle divider before ZK row)
+            Dim softClrG As Long
+            softClrG = IIf(rowClr = gClrTheme2, gClrTheme2a, gClrTheme2)
+            With ws.Range(ws.Cells(pupPhysRow, CfgColStart), ws.Cells(pupPhysRow, gradeEnd)).Borders(xlEdgeBottom)
+                .LineStyle = xlContinuous
+                .Weight = xlHairline
+                .color = softClrG
+            End With
+        Next i
+
+    ElseIf Not dkPresent And hasDK Then
+        ' Insert DK rows only — scan bottom-up for ZK rows
+        Dim dkScanLast As Long
+        dkScanLast = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 2 - 1
+        Dim dkR As Long
+        For dkR = dkScanLast To CfgRowStart + CfgRowOffsetFirstPupil Step -1
+            If ws.Cells(dkR, CfgColStart + 1).Value = "ZK" Then
+                Dim dkPupIdx As Long
+                dkPupIdx = 0
+                Dim dkRR As Long
+                For dkRR = CfgRowStart + CfgRowOffsetFirstPupil To dkR - 1
+                    Dim dkRRv As String
+                    dkRRv = ws.Cells(dkRR, CfgColStart + 1).Value
+                    If dkRRv <> "ZK" And dkRRv <> "DK" And dkRRv <> "" Then dkPupIdx = dkPupIdx + 1
+                Next dkRR
+                Dim dkClr As Long
+                If (dkPupIdx - 1) Mod 2 = 0 Then dkClr = gClrTheme2 Else dkClr = gClrTheme2a
+                Call FormatGradeZKDKRow(ws, dkR, sheetCnt, "ZK", dkClr, True)
+                ws.Rows(dkR + 1).Insert Shift:=xlDown
+                Call FormatGradeZKDKRow(ws, dkR + 1, sheetCnt, "DK", dkClr, False)
+            End If
+        Next dkR
+    End If
+
+    ' Fill all ZK/DK formulas
+    Call FillGradeZKDKFormulas(ws, sheetCnt, segStride)
+
+    ' Reapply outer border around the full pupil+ZK/DK block
+    Dim totalGradeRows As Integer
+    totalGradeRows = gNumOfPupils * segStride
+    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), _
+                  ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + totalGradeRows - 1, gradeEnd))
+        .Borders(xlEdgeLeft).LineStyle = xlContinuous:  .Borders(xlEdgeLeft).Weight = xlMedium:  .Borders(xlEdgeLeft).ColorIndex = 1
+        .Borders(xlEdgeRight).LineStyle = xlContinuous: .Borders(xlEdgeRight).Weight = xlMedium: .Borders(xlEdgeRight).ColorIndex = 1
+        .Borders(xlEdgeTop).LineStyle = xlContinuous:   .Borders(xlEdgeTop).Weight = xlMedium:   .Borders(xlEdgeTop).ColorIndex = 1
+        .Borders(xlEdgeBottom).LineStyle = xlContinuous:.Borders(xlEdgeBottom).Weight = xlMedium: .Borders(xlEdgeBottom).ColorIndex = 1
+    End With
+    ' Reapply medium border on percentage row
+    Dim gPctRow As Long
+    gPctRow = CfgRowStart + CfgRowOffsetFirstPupil + totalGradeRows
+    With ws.Range(ws.Cells(gPctRow, CfgColStart), ws.Cells(gPctRow, gradeEnd))
+        .Borders(xlEdgeTop).LineStyle = xlContinuous:    .Borders(xlEdgeTop).Weight = xlMedium:    .Borders(xlEdgeTop).ColorIndex = 1
+        .Borders(xlEdgeBottom).LineStyle = xlContinuous: .Borders(xlEdgeBottom).Weight = xlMedium: .Borders(xlEdgeBottom).ColorIndex = 1
+        .Borders(xlEdgeLeft).LineStyle = xlContinuous:   .Borders(xlEdgeLeft).Weight = xlMedium:   .Borders(xlEdgeLeft).ColorIndex = 1
+        .Borders(xlEdgeRight).LineStyle = xlContinuous:  .Borders(xlEdgeRight).Weight = xlMedium:  .Borders(xlEdgeRight).ColorIndex = 1
+    End With
+
+DoneGrade:
+    If DevMode <> 1 Then
+        ws.Protect Password:=WbPw
+        ws.EnableSelection = xlUnlockedCells
+    End If
+
+End Sub
+
+' Formats a single ZK/DK row on the grade sheet.
+Private Sub FormatGradeZKDKRow(ws As Worksheet, rowNum As Long, sheetCnt As Integer, label As String, rowClr As Long, softBottom As Boolean)
+
+    Dim gradeEnd As Long
+    gradeEnd = CfgColStart + sheetCnt + 4
+
+    ws.Rows(rowNum).RowHeight = 13.2
+    ws.Rows(rowNum).Font.Size = 8
+    ws.Rows(rowNum).Locked = True
+
+    Dim borderClr As Long
+    If rowClr = gClrTheme2 Then borderClr = gClrTheme2a Else borderClr = gClrTheme2
+
+    ' Index + label columns
+    Dim rngLbl As Range
+    Set rngLbl = ws.Range(ws.Cells(rowNum, CfgColStart), ws.Cells(rowNum, CfgColStart + 1))
+    Call ApplyBordersDirect(rngLbl, rowClr, xlThin, borderClr, softBottom)
+    ws.Cells(rowNum, CfgColStart + 1).Value = label
+    ws.Cells(rowNum, CfgColStart + 1).HorizontalAlignment = xlRight
+
+    ' Section + sum + points + grade columns
+    Dim rngData As Range
+    Set rngData = ws.Range(ws.Cells(rowNum, CfgColStart + 2), ws.Cells(rowNum, gradeEnd))
+    Call ApplyBordersDirect(rngData, rowClr, xlThin, borderClr, softBottom)
+    rngData.HorizontalAlignment = xlCenter
+    rngData.VerticalAlignment = xlCenter
+
+    ' Force outer left/right edges to xlMedium
+    With ws.Cells(rowNum, CfgColStart).Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous: .Weight = xlMedium: .ColorIndex = 1
+    End With
+    With ws.Cells(rowNum, gradeEnd).Borders(xlEdgeRight)
+        .LineStyle = xlContinuous: .Weight = xlMedium: .ColorIndex = 1
+    End With
+    ' Force left border of sum column (= section columns end + 1) to xlMedium
+    Dim colSumNum As Long
+    colSumNum = CfgColStart + CfgColOffsetFirstEx + sheetCnt
+    With ws.Cells(rowNum, colSumNum).Borders(xlEdgeLeft)
+        .LineStyle = xlContinuous: .Weight = xlMedium: .ColorIndex = 1
+    End With
+    With ws.Cells(rowNum, colSumNum).Borders(xlEdgeRight)
+        .LineStyle = xlContinuous: .Weight = xlMedium: .ColorIndex = 1
+    End With
+
+End Sub
+
+' Fills section-sum references, total sum, points and grade formulas into all
+' ZK/DK rows on the grade sheet. Scans top-to-bottom to track pupil index.
+Private Sub FillGradeZKDKFormulas(ws As Worksheet, sheetCnt As Integer, segStride As Integer)
+
+    Dim colFirst As String, colLast As String, colSum As String
+    colFirst = ColLetter(CfgColStart + CfgColOffsetFirstEx)
+    colLast  = ColLetter(CfgColStart + CfgColOffsetFirstEx + sheetCnt - 1)
+    colSum   = ColLetter(CfgColStart + CfgColOffsetFirstEx + sheetCnt)
+
+    Dim scanLast As Long
+    scanLast = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * segStride - 1
+
+    Dim pupilIdx As Integer
+    pupilIdx = -1  ' incremented to 0 on first EK row
+
+    Dim rowNum As Long
+    For rowNum = CfgRowStart + CfgRowOffsetFirstPupil To scanLast
+        Dim lbl As String
+        lbl = ws.Cells(rowNum, CfgColStart + 1).Value
+
+        If lbl = "ZK" Or lbl = "DK" Then
+            Dim zkOff As Integer
+            zkOff = IIf(lbl = "ZK", 1, 2)
+
+            ' Reference the sum cell on each segment sheet for this pupil's ZK/DK row
+            Dim u As Integer
+            For u = 0 To sheetCnt - 1
+                Dim sectName As String
+                sectName = Worksheets(WbNameConfig).Range(CfgFirstSect).offset(0, u * 2).Value
+                If sectName = "" Then GoTo NextSectCol
+                Dim numSubExU As Integer
+                numSubExU = CInt(Worksheets(WbNameConfig).Range(CfgExerCount).offset(0, u * 2).Value)
+                Dim segSumLtr As String
+                segSumLtr = ColLetter(CfgColStart + numSubExU + 2)
+                Dim segPhysRow As Long
+                segPhysRow = CfgRowStart + CfgRowOffsetFirstPupil + pupilIdx * segStride + zkOff
+                ws.Cells(rowNum, CfgColStart + CfgColOffsetFirstEx + u).Formula = _
+                    "='" & sectName & "'!" & segSumLtr & CStr(segPhysRow)
+NextSectCol:
+            Next u
+
+            ' Total sum across section columns on this row
+            ws.Cells(rowNum, CfgColStart + CfgColOffsetFirstEx + sheetCnt).Formula = _
+                "=SUM(" & colFirst & CStr(rowNum) & ":" & colLast & CStr(rowNum) & ")"
+            ' Points VLOOKUP
+            ws.Cells(rowNum, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1).Formula = _
+                "=VLOOKUP(VALUE(" & colSum & CStr(rowNum) & ")," & WbNameGradeKey & CfgVLookUpPoints & ")"
+            ' Grade VLOOKUP
+            ws.Cells(rowNum, CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2).Formula = _
+                "=VLOOKUP(VALUE(" & colSum & CStr(rowNum) & ")," & WbNameGradeKey & CfgVLookUpGrades & ")"
+
+        ElseIf lbl <> "" Then
+            pupilIdx = pupilIdx + 1
+        End If
+    Next rowNum
+
+End Sub
+
+' Removes ZK/DK rows from the grade sheet and restores borders.
+Public Sub RemoveZKDKRowsGradePage()
+
+    If Not WSExists(WbNameGradeSheet) Then Exit Sub
+
+    Dim ws As Worksheet
+    Set ws = Worksheets(WbNameGradeSheet)
+    ws.Unprotect Password:=WbPw
+
+    Dim sheetCnt As Integer
+    sheetCnt = CountSegmentSheets()
+    Dim gradeEnd As Long
+    gradeEnd = CfgColStart + sheetCnt + 4
+
+    Dim lastRow As Long
+    lastRow = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * 3
+
+    Dim deleteRng As Range
+    Dim r As Long
+    For r = CfgRowStart + CfgRowOffsetFirstPupil To lastRow
+        Dim lbl As String
+        lbl = ws.Cells(r, CfgColStart + 1).Value
+        If lbl = "ZK" Or lbl = "DK" Then
+            If deleteRng Is Nothing Then
+                Set deleteRng = ws.Rows(r)
+            Else
+                Set deleteRng = Union(deleteRng, ws.Rows(r))
+            End If
+        End If
+    Next r
+
+    If Not deleteRng Is Nothing Then deleteRng.Delete Shift:=xlUp
+
+    ' Restore pupil row bottom borders to solid thin
+    For r = CfgRowStart + CfgRowOffsetFirstPupil To CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1
+        With ws.Range(ws.Cells(r, CfgColStart), ws.Cells(r, gradeEnd)).Borders(xlEdgeBottom)
+            .LineStyle = xlContinuous
+            .Weight = xlThin
+            .ColorIndex = 1
+        End With
+    Next r
+
+    ' Restore outer border
+    With ws.Range(ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil, CfgColStart), _
+                  ws.Cells(CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils - 1, gradeEnd))
+        .Borders(xlEdgeLeft).LineStyle = xlContinuous:  .Borders(xlEdgeLeft).Weight = xlMedium:  .Borders(xlEdgeLeft).ColorIndex = 1
+        .Borders(xlEdgeRight).LineStyle = xlContinuous: .Borders(xlEdgeRight).Weight = xlMedium: .Borders(xlEdgeRight).ColorIndex = 1
+        .Borders(xlEdgeTop).LineStyle = xlContinuous:   .Borders(xlEdgeTop).Weight = xlMedium:   .Borders(xlEdgeTop).ColorIndex = 1
+        .Borders(xlEdgeBottom).LineStyle = xlContinuous:.Borders(xlEdgeBottom).Weight = xlMedium: .Borders(xlEdgeBottom).ColorIndex = 1
+    End With
+
+    If DevMode <> 1 Then
+        ws.Protect Password:=WbPw
+        ws.EnableSelection = xlUnlockedCells
+    End If
 
 End Sub
 

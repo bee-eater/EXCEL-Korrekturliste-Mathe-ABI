@@ -39,6 +39,8 @@ Public Function CreateTables()
             Worksheets(WbNameConfig).Range(CfgFirstPupi).offset(0, 1).Select
         End If
         
+        Call SetConfigPrintArea
+        Call ApplyLandscapeFitAllSheets
         Call LockSheets
         
         ' Druckblatt löschen
@@ -232,6 +234,8 @@ Private Function PaintSegmentPages()
         End With
         ' Define PupilBlock named range (replaces the AddZKDKRows call)
         Call DefinePupilBlockName(ws, numOfSubEx, gNumOfPupils)
+        ' Restrict print area to the table only (avoids printing grey background)
+        Call SetSegmentPrintArea(ws, numOfSubEx)
 
 NextSegPaint:
     Next actSheet
@@ -628,9 +632,14 @@ Public Function UpdateUpDownColors()
         colPts1 = CfgColStart + CfgColOffsetFirstEx + sheetCnt + 1
         colPts2 = CfgColStart + CfgColOffsetFirstEx + sheetCnt + 2
         colUD = CfgColStart + CfgColOffsetFirstEx + sheetCnt + 3
+
+        ' Use actual stride so pupil rows are addressed correctly when ZK/DK rows exist
+        Dim gradeStride As Integer
+        gradeStride = SheetStride(ws)
+
         For i = 0 To gNumOfPupils - 1
             Dim pupilRow As Long
-            pupilRow = CfgRowStart + CfgRowOffsetFirstPupil + i
+            pupilRow = CfgRowStart + CfgRowOffsetFirstPupil + i * gradeStride
             Dim upDownText As String
             upDownText = ws.Cells(pupilRow, colUD).Text
             Dim clr As Long
@@ -651,6 +660,37 @@ Public Function UpdateUpDownColors()
             End If
             ws.Range(ws.Cells(pupilRow, colPts1), ws.Cells(pupilRow, colPts2)).Interior.color = clr
         Next i
+
+        ' Highlight ZK/DK grade cells when they differ from the EK grade
+        If gradeStride >= 2 Then
+            Dim colGradeNum As Long
+            colGradeNum = colPts2  ' grade column = colPts2
+            Dim scanLast As Long
+            scanLast = CfgRowStart + CfgRowOffsetFirstPupil + gNumOfPupils * gradeStride - 1
+            Dim curEKGrade As String
+            Dim curPupIdx As Integer
+            curPupIdx = -1
+            Dim scanRow As Long
+            For scanRow = CfgRowStart + CfgRowOffsetFirstPupil To scanLast
+                Dim scanLbl As String
+                scanLbl = ws.Cells(scanRow, CfgColStart + 1).Value
+                If scanLbl = "ZK" Or scanLbl = "DK" Then
+                    Dim zkGrade As String
+                    zkGrade = ws.Cells(scanRow, colGradeNum).Text
+                    Dim altClr As Long
+                    If curPupIdx Mod 2 = 0 Then altClr = gClrTheme2 Else altClr = gClrTheme2a
+                    If zkGrade <> "" And zkGrade <> curEKGrade Then
+                        ws.Cells(scanRow, colGradeNum).Interior.color = gClrMinus1
+                    Else
+                        ws.Cells(scanRow, colGradeNum).Interior.color = altClr
+                    End If
+                ElseIf scanLbl <> "" Then
+                    curPupIdx = curPupIdx + 1
+                    curEKGrade = ws.Cells(scanRow, colGradeNum).Text
+                End If
+            Next scanRow
+        End If
+
     Else
         MsgBox ("Corrupt!")
     End If
@@ -732,7 +772,7 @@ Private Sub FillGradePage_WriteSectionColumns(ByVal ws As Worksheet, ByVal sheet
     Next u
 End Sub
 
-Private Function CountSegmentSheets() As Integer
+Public Function CountSegmentSheets() As Integer
     Dim cnt As Integer, i As Integer
     cnt = 0
     For i = 0 To CfgMaxSheets
