@@ -75,6 +75,7 @@ Public gClrPlus2 As Long
 ' ZK/DK diff
 Public gClrZKDKDiffGt As Long
 Public gClrZKDKDiffLt As Long
+Public gClrZKDKDiffGrade As Long
 
 'Vars
 Public gNumOfPupils As Integer
@@ -109,6 +110,7 @@ Public Function Init()
     
     gClrZKDKDiffGt = RGB(230, 255, 230)
     gClrZKDKDiffLt = RGB(255, 220, 220)
+    gClrZKDKDiffGrade = RGB(255, 255, 153)
     
     gNumOfPupils = Worksheets(WbNameConfig).Range(CfgNumOfPupi).Value
 

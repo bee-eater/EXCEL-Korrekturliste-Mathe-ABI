@@ -680,7 +680,7 @@ Public Function UpdateUpDownColors()
                     Dim altClr As Long
                     If curPupIdx Mod 2 = 0 Then altClr = gClrTheme2 Else altClr = gClrTheme2a
                     If zkGrade <> "" And zkGrade <> curEKGrade Then
-                        ws.Cells(scanRow, colGradeNum).Interior.color = gClrMinus1
+                        ws.Cells(scanRow, colGradeNum).Interior.color = gClrZKDKDiffGrade
                     Else
                         ws.Cells(scanRow, colGradeNum).Interior.color = altClr
                     End If
